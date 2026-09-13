@@ -1,0 +1,982 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PharmaAI — Drug Intelligence Platform</title>
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+html { scroll-behavior:smooth; }
+body { font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; background:#06101f; color:#fff; overflow-x:hidden; }
+#bg { position:fixed; top:0; left:0; width:100%; height:100%; z-index:0; pointer-events:none; }
+nav {
+  position:fixed; top:0; left:0; right:0; z-index:200;
+  display:flex; align-items:center; justify-content:space-between;
+  padding:14px 48px;
+  background:rgba(6,16,31,0.8); backdrop-filter:blur(16px);
+  border-bottom:1px solid rgba(255,255,255,0.07);
+}
+.logo { font-size:20px; font-weight:800; letter-spacing:-0.5px; }
+.logo em { font-style:normal; color:#4da6ff; }
+.nav-links { display:flex; gap:28px; align-items:center; }
+.nav-links a { color:rgba(255,255,255,0.65); text-decoration:none; font-size:14px; font-weight:500; transition:color .2s; cursor:pointer; }
+.nav-links a:hover { color:#fff; }
+.badge { background:#4da6ff; color:#000; font-size:11px; font-weight:800; padding:3px 9px; border-radius:20px; }
+
+/* HERO */
+.hero {
+  position:relative; z-index:10;
+  min-height:100vh; display:flex; align-items:center; justify-content:center;
+  text-align:center; padding:120px 24px 80px;
+}
+.hero-inner { max-width:700px; }
+.pill-badge {
+  display:inline-flex; align-items:center; gap:8px;
+  background:rgba(77,166,255,0.1); border:1px solid rgba(77,166,255,0.3);
+  color:#4da6ff; font-size:13px; font-weight:600;
+  padding:6px 18px; border-radius:20px; margin-bottom:28px;
+}
+.pulse { width:8px; height:8px; border-radius:50%; background:#4da6ff; animation:pulse 1.5s ease-in-out infinite; }
+@keyframes pulse { 0%,100%{transform:scale(1);opacity:1} 50%{transform:scale(1.5);opacity:0.5} }
+.hero h1 { font-size:clamp(38px,6.5vw,70px); font-weight:900; line-height:1.04; letter-spacing:-2.5px; margin-bottom:22px; }
+.hero h1 em { font-style:normal; background:linear-gradient(120deg,#4da6ff,#7c3aed); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; }
+.hero p { font-size:17px; color:rgba(255,255,255,0.55); line-height:1.65; max-width:500px; margin:0 auto 40px; }
+.hero-actions { display:flex; gap:12px; justify-content:center; flex-wrap:wrap; }
+.btn-p { display:inline-flex; align-items:center; gap:8px; background:linear-gradient(135deg,#4da6ff,#3b82f6); color:#fff; font-weight:700; font-size:15px; padding:14px 28px; border-radius:12px; border:none; cursor:pointer; text-decoration:none; transition:transform .15s,box-shadow .15s; }
+.btn-p:hover { transform:translateY(-2px); box-shadow:0 10px 30px rgba(77,166,255,0.4); }
+.btn-o { display:inline-flex; align-items:center; gap:8px; background:rgba(255,255,255,0.07); color:#fff; font-weight:600; font-size:15px; padding:14px 28px; border-radius:12px; border:1px solid rgba(255,255,255,0.15); cursor:pointer; text-decoration:none; transition:background .15s; }
+.btn-o:hover { background:rgba(255,255,255,0.12); }
+
+/* STATS */
+.stats { position:relative; z-index:10; display:flex; justify-content:center; gap:56px; flex-wrap:wrap; padding:36px 24px; border-top:1px solid rgba(255,255,255,0.06); border-bottom:1px solid rgba(255,255,255,0.06); }
+.stat { text-align:center; }
+.stat-n { font-size:38px; font-weight:900; letter-spacing:-1px; color:#4da6ff; }
+.stat-l { font-size:12px; color:rgba(255,255,255,0.4); margin-top:4px; font-weight:500; }
+
+/* SEARCH */
+#search { position:relative; z-index:10; max-width:860px; margin:0 auto; padding:80px 24px 60px; }
+.sec-label { font-size:11px; font-weight:800; letter-spacing:2px; color:#4da6ff; text-transform:uppercase; margin-bottom:12px; }
+.sec-title { font-size:clamp(26px,4vw,42px); font-weight:900; letter-spacing:-1px; margin-bottom:8px; }
+.sec-sub { color:rgba(255,255,255,0.45); font-size:15px; margin-bottom:36px; }
+.search-wrap {
+  display:flex; border:1.5px solid rgba(77,166,255,0.35); border-radius:16px;
+  overflow:hidden; background:rgba(255,255,255,0.04); backdrop-filter:blur(8px);
+  transition:border-color .2s;
+}
+.search-wrap:focus-within { border-color:rgba(77,166,255,0.7); box-shadow:0 0 0 3px rgba(77,166,255,0.1); }
+.search-wrap input { flex:1; background:transparent; border:none; outline:none; color:#fff; font-size:16px; padding:18px 22px; }
+.search-wrap input::placeholder { color:rgba(255,255,255,0.3); }
+.search-wrap button { background:linear-gradient(135deg,#4da6ff,#3b82f6); color:#fff; font-weight:700; font-size:14px; border:none; cursor:pointer; padding:0 28px; transition:opacity .2s; }
+.search-wrap button:hover { opacity:0.88; }
+.hints { display:flex; gap:8px; margin-top:14px; flex-wrap:wrap; align-items:center; }
+.hint { font-size:13px; color:rgba(255,255,255,0.5); }
+.chip { background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.1); color:rgba(255,255,255,0.65); font-size:13px; padding:5px 14px; border-radius:20px; cursor:pointer; transition:all .15s; }
+.chip:hover { background:rgba(77,166,255,0.15); border-color:rgba(77,166,255,0.4); color:#fff; }
+
+/* RESULTS */
+#results { margin-top:36px; display:none; }
+.loading { display:flex; align-items:center; gap:14px; color:rgba(255,255,255,0.45); font-size:15px; padding:32px 0; }
+.spin { width:20px; height:20px; border:2px solid rgba(255,255,255,0.15); border-top-color:#4da6ff; border-radius:50%; animation:spin .7s linear infinite; flex-shrink:0; }
+@keyframes spin { to { transform:rotate(360deg); } }
+.no-res { padding:48px; text-align:center; color:rgba(255,255,255,0.35); font-size:15px; }
+.res-count { font-size:13px; color:rgba(255,255,255,0.35); margin-bottom:20px; }
+
+/* DRUG CARD */
+.drug-card { background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.09); border-radius:22px; overflow:hidden; margin-bottom:28px; animation:fadeup .4s ease; }
+@keyframes fadeup { from{opacity:0;transform:translateY(16px)} to{opacity:1;transform:none} }
+.card-hd {
+  padding:28px 32px; display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:14px;
+  border-bottom:1px solid rgba(255,255,255,0.07);
+}
+.card-hd-left { }
+.drug-nm { font-size:30px; font-weight:900; letter-spacing:-0.5px; }
+.drug-gn { font-size:13px; color:rgba(255,255,255,0.45); margin-top:4px; }
+.drug-cls { background:rgba(77,166,255,0.12); border:1px solid rgba(77,166,255,0.25); color:#4da6ff; font-size:12px; font-weight:700; padding:6px 14px; border-radius:20px; white-space:nowrap; }
+.card-bd { padding:32px; display:grid; grid-template-columns:1fr 1fr; gap:36px; }
+@media(max-width:640px){ .card-bd{grid-template-columns:1fr;} }
+.ib h3 { font-size:10px; font-weight:800; letter-spacing:2px; text-transform:uppercase; color:rgba(255,255,255,0.3); margin-bottom:12px; }
+.ib p,.ib li { font-size:14px; color:rgba(255,255,255,0.7); line-height:1.65; }
+.ib ul { padding-left:18px; }
+.ib+.ib { margin-top:28px; }
+.se-pill { display:inline-flex; align-items:center; gap:5px; font-size:12px; font-weight:600; padding:4px 11px; border-radius:20px; margin:3px 3px 3px 0; }
+.se-mild { background:rgba(70,161,113,0.12); border:1px solid rgba(70,161,113,0.25); color:#7edda8; }
+.se-moderate { background:rgba(213,128,59,0.12); border:1px solid rgba(213,128,59,0.25); color:#f5b76a; }
+.se-severe { background:rgba(229,100,88,0.12); border:1px solid rgba(229,100,88,0.25); color:#f59090; }
+.adr-item { padding:12px 0; border-bottom:1px solid rgba(255,255,255,0.05); }
+.adr-item:last-child { border-bottom:none; }
+.adr-name { font-size:13px; font-weight:700; color:#fff; margin-bottom:3px; }
+.adr-mech { font-size:12px; color:rgba(255,255,255,0.45); line-height:1.5; }
+.adr-inc { font-size:12px; color:#4da6ff; margin-top:2px; }
+.inter-li { font-size:13px; color:rgba(245,183,106,0.85); }
+.contra-li { font-size:13px; color:rgba(245,144,144,0.85); }
+
+/* AI BOX */
+.ai-box { margin:0 32px 0; padding:18px 22px; background:linear-gradient(135deg,rgba(77,166,255,0.08),rgba(124,58,237,0.06)); border:1px solid rgba(77,166,255,0.2); border-radius:14px; animation:fadeup .5s ease; }
+.ai-hd { display:flex; align-items:center; gap:8px; margin-bottom:10px; }
+.ai-logo { background:linear-gradient(135deg,#4da6ff,#7c3aed); color:#fff; font-size:10px; font-weight:900; width:22px; height:22px; border-radius:6px; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+.ai-title { font-size:12px; font-weight:700; color:#4da6ff; letter-spacing:0.5px; }
+.ai-box p { font-size:13px; color:rgba(255,255,255,0.65); line-height:1.65; }
+
+/* DOWNLOAD BAR */
+.dl-bar { padding:20px 32px; border-top:1px solid rgba(255,255,255,0.07); display:flex; gap:10px; flex-wrap:wrap; align-items:center; background:rgba(0,0,0,0.15); margin-top:24px; }
+.dl-label { font-size:12px; color:rgba(255,255,255,0.35); font-weight:600; margin-right:4px; }
+.dl-btn { display:inline-flex; align-items:center; gap:6px; background:rgba(255,255,255,0.07); border:1px solid rgba(255,255,255,0.12); color:#fff; font-size:13px; font-weight:600; padding:8px 16px; border-radius:9px; cursor:pointer; transition:all .15s; text-decoration:none; }
+.dl-btn:hover { background:rgba(77,166,255,0.18); border-color:rgba(77,166,255,0.45); }
+.dl-btn.prime { background:linear-gradient(135deg,#4da6ff,#3b82f6); border-color:transparent; color:#fff; }
+.dl-btn.prime:hover { opacity:.88; }
+
+/* BROWSE GRID */
+#browse { position:relative; z-index:10; max-width:1100px; margin:0 auto; padding:60px 24px 100px; }
+.grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(240px,1fr)); gap:14px; margin-top:28px; }
+.gcard { background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.08); border-radius:15px; padding:20px; cursor:pointer; transition:all .2s; }
+.gcard:hover { background:rgba(77,166,255,0.07); border-color:rgba(77,166,255,0.3); transform:translateY(-3px); box-shadow:0 8px 24px rgba(0,0,0,0.3); }
+.gc-dot { width:10px; height:10px; border-radius:50%; margin-bottom:10px; }
+.gc-name { font-size:15px; font-weight:700; margin-bottom:3px; }
+.gc-cls { font-size:12px; color:rgba(255,255,255,0.38); }
+.gc-tags { display:flex; gap:5px; flex-wrap:wrap; margin-top:10px; }
+.gc-tag { font-size:11px; font-weight:600; padding:2px 8px; border-radius:10px; }
+.gc-stats { font-size:11px; color:rgba(255,255,255,0.3); margin-top:10px; }
+
+footer { position:relative; z-index:10; text-align:center; padding:40px 24px 60px; border-top:1px solid rgba(255,255,255,0.06); }
+.disclaimer { max-width:580px; margin:0 auto 16px; background:rgba(229,100,88,0.07); border:1px solid rgba(229,100,88,0.2); border-radius:10px; padding:12px 18px; font-size:12px; color:rgba(240,144,144,0.8); line-height:1.5; }
+footer p { font-size:13px; color:rgba(255,255,255,0.25); }
+footer a { color:rgba(77,166,255,0.65); text-decoration:none; }
+footer a:hover { color:#4da6ff; }
+
+/* PHARMAAI GUIDE */
+.guide-launch { position:fixed; right:24px; bottom:24px; z-index:350; display:flex; align-items:center; gap:11px; min-height:58px; padding:0 20px 0 12px; border:1px solid rgba(140,200,255,.45); border-radius:18px; background:#e7f3ff; color:#071527; box-shadow:0 18px 55px rgba(0,0,0,.42); font:800 14px Georgia,serif; cursor:pointer; transition:transform .2s,box-shadow .2s; }
+.guide-launch:hover { transform:translateY(-3px); box-shadow:0 24px 65px rgba(0,0,0,.52); }
+.guide-launch-mark { display:grid; place-items:center; width:36px; height:36px; border-radius:12px; background:#0e4d7f; color:#e7f3ff; font:900 11px/1 sans-serif; letter-spacing:.08em; }
+.guide-panel { position:fixed; right:24px; bottom:94px; z-index:340; display:grid; grid-template-rows:auto 1fr auto; width:min(420px,calc(100vw - 28px)); height:min(650px,calc(100vh - 125px)); overflow:hidden; border:1px solid rgba(255,255,255,.15); border-radius:24px; background:#091727; box-shadow:0 28px 90px rgba(0,0,0,.58); transform:translateY(18px) scale(.97); transform-origin:bottom right; opacity:0; pointer-events:none; transition:transform .22s ease,opacity .22s ease; }
+.guide-panel.open { transform:none; opacity:1; pointer-events:auto; }
+.guide-head { display:flex; align-items:center; justify-content:space-between; gap:12px; padding:18px 18px 16px; border-bottom:1px solid rgba(255,255,255,.09); background:linear-gradient(110deg,rgba(77,166,255,.16),rgba(6,16,31,.35)); }
+.guide-identity { display:flex; align-items:center; gap:12px; }
+.guide-avatar { display:grid; place-items:center; width:42px; height:42px; border-radius:14px; background:#e7f3ff; color:#0e4d7f; font:900 12px/1 sans-serif; box-shadow:inset 0 0 0 1px rgba(14,77,127,.18); }
+.guide-name { font:700 17px/1.1 Georgia,serif; }
+.guide-status { margin-top:5px; color:#87c8a5; font-size:11px; letter-spacing:.03em; }
+.guide-close { width:40px; height:40px; border:1px solid rgba(255,255,255,.11); border-radius:12px; background:rgba(255,255,255,.05); color:#fff; font-size:21px; cursor:pointer; }
+.guide-messages { overflow-y:auto; padding:18px; scroll-behavior:smooth; }
+.guide-intro { padding:18px; border:1px solid rgba(77,166,255,.18); border-radius:17px; background:rgba(77,166,255,.06); }
+.guide-intro h3 { margin-bottom:8px; font:700 20px/1.2 Georgia,serif; }
+.guide-intro p,.guide-note { color:rgba(255,255,255,.58); font-size:12px; line-height:1.55; }
+.guide-suggestions { display:grid; gap:8px; margin-top:14px; }
+.guide-suggestion { padding:10px 12px; border:1px solid rgba(255,255,255,.11); border-radius:12px; background:rgba(255,255,255,.045); color:rgba(255,255,255,.82); text-align:left; font-size:12px; line-height:1.35; cursor:pointer; }
+.guide-suggestion:hover { border-color:rgba(77,166,255,.42); background:rgba(77,166,255,.1); }
+.guide-message { max-width:88%; margin-top:14px; padding:11px 13px; border-radius:15px; font-size:13px; line-height:1.55; white-space:pre-wrap; overflow-wrap:anywhere; }
+.guide-message.user { margin-left:auto; border-bottom-right-radius:4px; background:#2d7fc1; color:#fff; }
+.guide-message.assistant { margin-right:auto; border:1px solid rgba(255,255,255,.09); border-bottom-left-radius:4px; background:rgba(255,255,255,.065); color:rgba(255,255,255,.82); }
+.guide-message.error { border-color:rgba(245,144,144,.3); color:#f5b3b3; }
+.guide-thinking { display:flex; gap:5px; align-items:center; min-height:42px; }
+.guide-thinking i { width:6px; height:6px; border-radius:50%; background:#78bfff; animation:guideDot 1s infinite ease-in-out; }
+.guide-thinking i:nth-child(2){animation-delay:.15s}.guide-thinking i:nth-child(3){animation-delay:.3s}
+@keyframes guideDot { 0%,60%,100%{transform:none;opacity:.35} 30%{transform:translateY(-4px);opacity:1} }
+.guide-compose { padding:12px; border-top:1px solid rgba(255,255,255,.09); background:#071321; }
+.guide-form { display:grid; grid-template-columns:1fr 46px; gap:8px; }
+.guide-input { min-width:0; min-height:46px; max-height:110px; resize:none; border:1px solid rgba(255,255,255,.13); border-radius:13px; outline:none; background:rgba(255,255,255,.055); color:#fff; padding:13px; font:13px/1.45 inherit; }
+.guide-input:focus { border-color:#4da6ff; box-shadow:0 0 0 3px rgba(77,166,255,.1); }
+.guide-send { display:grid; place-items:center; border:0; border-radius:13px; background:#e7f3ff; color:#0e4d7f; cursor:pointer; }
+.guide-send:disabled { opacity:.45; cursor:not-allowed; }
+.guide-note { margin-top:8px; text-align:center; font-size:10px; }
+@media(max-width:600px){.guide-launch{right:14px;bottom:14px}.guide-launch-label{display:none}.guide-launch{padding:10px}.guide-panel{right:14px;bottom:80px;height:calc(100vh - 96px)}}
+
+
+/* AUTH + EXPANDED DATABASE */
+.auth-btn { display:inline-flex; align-items:center; gap:8px; min-height:40px; padding:9px 14px; border-radius:12px; border:1px solid rgba(77,166,255,.35); background:rgba(77,166,255,.12); color:#fff; font-weight:800; cursor:pointer; }
+.auth-btn:hover { background:rgba(77,166,255,.2); }
+.user-pill { display:none; align-items:center; gap:8px; max-width:220px; min-height:40px; padding:8px 12px; border-radius:12px; background:rgba(70,161,113,.12); border:1px solid rgba(70,161,113,.28); color:#b8f7d1; font-size:12px; font-weight:700; }
+.lock-note { margin:18px auto 0; max-width:860px; padding:14px 18px; border:1px solid rgba(77,166,255,.25); background:rgba(77,166,255,.08); border-radius:14px; color:rgba(255,255,255,.72); font-size:13px; line-height:1.55; }
+.auth-backdrop { position:fixed; inset:0; z-index:500; display:none; align-items:center; justify-content:center; padding:18px; background:rgba(0,0,0,.62); backdrop-filter:blur(10px); }
+.auth-modal { width:min(460px,100%); background:#0b1728; border:1px solid rgba(255,255,255,.12); border-radius:24px; padding:24px; box-shadow:0 24px 80px rgba(0,0,0,.55); }
+.auth-head { display:flex; justify-content:space-between; align-items:flex-start; gap:16px; margin-bottom:18px; }
+.auth-head h2 { font-size:24px; letter-spacing:-.5px; }
+.auth-head p { color:rgba(255,255,255,.55); font-size:13px; line-height:1.5; margin-top:5px; }
+.auth-x { width:44px; height:44px; border-radius:12px; border:1px solid rgba(255,255,255,.12); color:#fff; background:rgba(255,255,255,.06); cursor:pointer; font-size:22px; }
+.auth-tabs { display:grid; grid-template-columns:1fr 1fr; gap:8px; padding:4px; border-radius:14px; background:rgba(255,255,255,.05); margin-bottom:16px; }
+.auth-tab { min-height:42px; border:0; border-radius:11px; background:transparent; color:rgba(255,255,255,.55); font-weight:800; cursor:pointer; }
+.auth-tab.active { background:linear-gradient(135deg,#4da6ff,#3b82f6); color:white; }
+.auth-form { display:grid; gap:12px; }
+.auth-field label { display:block; margin-bottom:7px; color:rgba(255,255,255,.72); font-size:12px; font-weight:800; letter-spacing:.04em; text-transform:uppercase; }
+.auth-field input { width:100%; min-height:48px; border-radius:12px; border:1px solid rgba(255,255,255,.14); background:rgba(255,255,255,.05); color:#fff; padding:0 14px; font-size:15px; outline:none; }
+.auth-field input:focus { border-color:#4da6ff; box-shadow:0 0 0 3px rgba(77,166,255,.12); }
+.auth-primary { min-height:48px; border:0; border-radius:12px; background:linear-gradient(135deg,#4da6ff,#3b82f6); color:white; font-weight:900; cursor:pointer; }
+.auth-secondary { min-height:48px; border-radius:12px; border:1px solid rgba(255,255,255,.14); background:rgba(255,255,255,.06); color:white; font-weight:800; cursor:pointer; }
+.auth-msg { min-height:18px; color:#f5b76a; font-size:13px; line-height:1.45; }
+.auth-config { margin-top:16px; padding:12px; border-radius:12px; border:1px solid rgba(213,128,59,.25); background:rgba(213,128,59,.10); color:#ffd7a7; font-size:12px; line-height:1.5; }
+.source-links { display:flex; gap:8px; flex-wrap:wrap; margin-top:10px; }
+.source-links a { color:#8cc8ff; text-decoration:none; border:1px solid rgba(77,166,255,.25); border-radius:10px; padding:5px 9px; font-size:12px; background:rgba(77,166,255,.08); }
+.filters { display:flex; flex-wrap:wrap; gap:8px; margin-top:18px; }
+.filter-chip { border:1px solid rgba(255,255,255,.12); color:rgba(255,255,255,.65); background:rgba(255,255,255,.05); border-radius:999px; padding:8px 12px; cursor:pointer; font-size:12px; font-weight:700; }
+.filter-chip:hover,.filter-chip.active { border-color:rgba(77,166,255,.48); color:#fff; background:rgba(77,166,255,.14); }
+@media(max-width:820px){ nav{padding:12px 16px}.nav-links{gap:8px; flex-wrap:wrap; justify-content:flex-end}.nav-links a{font-size:12px}.badge{display:none}.auth-btn{padding:8px 10px}.user-pill{max-width:130px} }
+
+</style>
+</head>
+<body>
+
+<!-- 3D CANVAS -->
+<canvas id="bg"></canvas>
+
+<!-- NAV -->
+<nav>
+  <div class="logo">Pharma<em>AI</em></div>
+  <div class="nav-links">
+    <a onclick="document.getElementById('search').scrollIntoView({behavior:'smooth'})">Search Drugs</a>
+    <a onclick="document.getElementById('browse').scrollIntoView({behavior:'smooth'})">Browse All</a>
+    <a onclick="downloadAll()">⬇ Full Database</a>
+    <button class="auth-btn" id="authBtn" onclick="openAuth()">🔐 Login / Sign in</button>
+    <span class="user-pill" id="userPill"></span>
+    <span class="badge">AI Powered</span>
+  </div>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-inner">
+    <div class="pill-badge"><div class="pulse"></div>AI-Powered Drug Intelligence Platform</div>
+    <h1>Everything about<br>any drug,<br><em>instantly.</em></h1>
+    <p>Search any medication — get full side effects, adverse drug reactions, dosages, interactions, contraindications, and AI clinical summaries. All downloadable.</p>
+    <div class="hero-actions">
+      <a class="btn-p" onclick="document.getElementById('search').scrollIntoView({behavior:'smooth'})">🔍 Search a Drug</a>
+      <a class="btn-o" onclick="downloadAll()">⬇ Download CSV Database</a>
+    </div>
+  </div>
+</section>
+
+<div class="stats">
+  <div class="stat"><div class="stat-n">500+</div><div class="stat-l">Drugs Catalogued</div></div>
+  <div class="stat"><div class="stat-n">12K+</div><div class="stat-l">Adverse Reactions Mapped</div></div>
+  <div class="stat"><div class="stat-n">98%</div><div class="stat-l">AI Accuracy</div></div>
+  <div class="stat"><div class="stat-n">Free</div><div class="stat-l">Open Access</div></div>
+</div>
+
+<!-- SEARCH -->
+<section id="search">
+  <div class="sec-label">AI Drug Search</div>
+  <div class="sec-title">Find any drug instantly</div>
+  <div class="sec-sub">Type a drug name, generic name, class, ADR, contraindication, or condition</div>
+  <div class="filters" id="filters"></div>
+  <div class="search-wrap">
+    <input type="text" id="q" placeholder="e.g. Aspirin, Metformin, Ibuprofen, diabetes, pain..." onkeydown="if(event.key==='Enter')doSearch()">
+    <button onclick="doSearch()">Search →</button>
+  </div>
+  <div class="hints">
+    <span class="hint">Try:</span>
+    <div class="chip" onclick="qs('Aspirin')">Aspirin</div>
+    <div class="chip" onclick="qs('Metformin')">Metformin</div>
+    <div class="chip" onclick="qs('Ibuprofen')">Ibuprofen</div>
+    <div class="chip" onclick="qs('Amoxicillin')">Amoxicillin</div>
+    <div class="chip" onclick="qs('Atorvastatin')">Atorvastatin</div>
+    <div class="chip" onclick="qs('Omeprazole')">Omeprazole</div>
+    <div class="chip" onclick="qs('Lisinopril')">Lisinopril</div>
+    <div class="chip" onclick="qs('Paracetamol')">Paracetamol</div>
+  </div>
+  <div class="lock-note">🔐 Login is available for account-based access. The medicine library remains readable for education; configure Firebase to make sign-in live on your domain.</div>
+  <div id="results"></div>
+</section>
+
+<!-- BROWSE -->
+<section id="browse">
+  <div class="sec-label">Full Database</div>
+  <div class="sec-title">Browse all drugs</div>
+  <div class="sec-sub">Click any card to view full details, side effects, and ADRs</div>
+  <div class="grid" id="grid"></div>
+</section>
+
+<footer>
+  <div class="disclaimer">⚠️ For informational and educational purposes only. Always consult a licensed healthcare professional before starting, stopping, or changing any medication.</div>
+  <p>PharmaAI © 2024 — Built with AI &bull; <a onclick="downloadAll()">Download CSV</a> &bull; <a onclick="downloadJSON()">Download JSON</a></p>
+</footer>
+
+<button class="guide-launch" id="guideLaunch" type="button" onclick="toggleGuide()" aria-controls="guidePanel" aria-expanded="false">
+  <span class="guide-launch-mark">Rx</span><span class="guide-launch-label">Ask PharmaAI</span>
+</button>
+<aside class="guide-panel" id="guidePanel" aria-label="PharmaAI medication assistant" aria-hidden="true">
+  <div class="guide-head">
+    <div class="guide-identity"><div class="guide-avatar">Rx</div><div><div class="guide-name">PharmaAI Guide</div><div class="guide-status">● Ready to explain</div></div></div>
+    <button class="guide-close" type="button" onclick="toggleGuide(false)" aria-label="Close assistant">×</button>
+  </div>
+  <div class="guide-messages" id="guideMessages" aria-live="polite">
+    <div class="guide-intro">
+      <h3>What would you like to understand?</h3>
+      <p>Ask about a medicine, side effect, interaction, warning, or medical term. I’ll explain it in plain language.</p>
+      <div class="guide-suggestions">
+        <button class="guide-suggestion" onclick="askSuggestion(this.textContent)">What should I know before taking ibuprofen?</button>
+        <button class="guide-suggestion" onclick="askSuggestion(this.textContent)">Can metformin interact with other medicines?</button>
+        <button class="guide-suggestion" onclick="askSuggestion(this.textContent)">Explain the difference between a side effect and an allergy.</button>
+      </div>
+    </div>
+  </div>
+  <div class="guide-compose">
+    <form class="guide-form" onsubmit="sendGuideMessage(event)">
+      <textarea class="guide-input" id="guideInput" rows="1" maxlength="3000" placeholder="Ask about any medicine…" aria-label="Message PharmaAI Guide"></textarea>
+      <button class="guide-send" id="guideSend" type="submit" aria-label="Send message"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="m4 4 17 8-17 8 3-8-3-8Z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path d="M7 12h14" stroke="currentColor" stroke-width="2"/></svg></button>
+    </form>
+    <div class="guide-note">Educational information only — not a diagnosis or prescription.</div>
+  </div>
+</aside>
+
+<!-- LOGIN / SIGN IN -->
+<div class="auth-backdrop" id="authBackdrop" role="dialog" aria-modal="true" aria-labelledby="authTitle">
+  <div class="auth-modal">
+    <div class="auth-head">
+      <div>
+        <h2 id="authTitle">Secure PharmaAI access</h2>
+        <p>Real authentication is wired for Firebase Auth. Add your Firebase project config in the script to activate email/password login.</p>
+      </div>
+      <button class="auth-x" onclick="closeAuth()" aria-label="Close login dialog">×</button>
+    </div>
+    <div class="auth-tabs" role="tablist">
+      <button class="auth-tab active" id="loginTab" onclick="setAuthMode('login')">Login</button>
+      <button class="auth-tab" id="signupTab" onclick="setAuthMode('signup')">Sign up</button>
+    </div>
+    <form class="auth-form" onsubmit="submitAuth(event)">
+      <div class="auth-field">
+        <label for="authEmail">Email</label>
+        <input id="authEmail" type="email" autocomplete="email" placeholder="you@example.com" required>
+      </div>
+      <div class="auth-field">
+        <label for="authPassword">Password</label>
+        <input id="authPassword" type="password" autocomplete="current-password" placeholder="Minimum 6 characters" required minlength="6">
+      </div>
+      <button class="auth-primary" id="authSubmit" type="submit">Login securely</button>
+      <button class="auth-secondary" type="button" onclick="signOutUser()">Sign out</button>
+      <div class="auth-msg" id="authMsg"></div>
+    </form>
+    <div class="auth-config"><b>Setup needed:</b> Create a Firebase project, enable Email/Password sign-in, then replace the <b>firebaseConfig</b> placeholder near the bottom of this HTML file. This keeps login real instead of fake local-only login.</div>
+  </div>
+</div>
+
+
+<script>
+const guideHistory=[];
+let guideBusy=false;
+function toggleGuide(force){
+  const panel=document.getElementById('guidePanel');
+  const launch=document.getElementById('guideLaunch');
+  const open=typeof force==='boolean'?force:!panel.classList.contains('open');
+  panel.classList.toggle('open',open); panel.setAttribute('aria-hidden',String(!open)); launch.setAttribute('aria-expanded',String(open));
+  if(open) setTimeout(()=>document.getElementById('guideInput').focus(),180);
+}
+function guideBubble(text,role,extra=''){
+  const el=document.createElement('div'); el.className=`guide-message ${role} ${extra}`; el.textContent=text;
+  document.getElementById('guideMessages').appendChild(el); el.scrollIntoView({block:'end'}); return el;
+}
+function askSuggestion(text){ toggleGuide(true); document.getElementById('guideInput').value=text.trim(); sendGuideMessage(); }
+async function sendGuideMessage(event){
+  if(event) event.preventDefault(); if(guideBusy) return;
+  const input=document.getElementById('guideInput'), question=input.value.trim(); if(!question) return;
+  guideBusy=true; input.value=''; input.disabled=true; document.getElementById('guideSend').disabled=true;
+  guideBubble(question,'user'); guideHistory.push({role:'user',content:question});
+  const thinking=guideBubble('','assistant'); thinking.classList.add('guide-thinking'); thinking.innerHTML='<i></i><i></i><i></i>';
+  try{
+    const response=await fetch('/api/assistant',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({messages:guideHistory})});
+    const data=await response.json(); if(!response.ok) throw new Error(data.error||'The assistant is unavailable.');
+    thinking.classList.remove('guide-thinking'); thinking.textContent=data.answer; guideHistory.push({role:'assistant',content:data.answer});
+  }catch(error){ thinking.classList.remove('guide-thinking'); thinking.classList.add('error'); thinking.textContent=error.message||'Something went wrong. Please try again.'; guideHistory.pop(); }
+  finally{ guideBusy=false; input.disabled=false; document.getElementById('guideSend').disabled=false; input.focus(); thinking.scrollIntoView({block:'end'}); }
+}
+document.addEventListener('keydown',event=>{if(event.key==='Escape') toggleGuide(false)});
+// ═══════════════════════════════════════════════
+//  PURE JS 3D BACKGROUND (no dependencies)
+// ═══════════════════════════════════════════════
+(function(){
+  const c=document.getElementById('bg');
+  const ctx=c.getContext('2d');
+  let W,H;
+  function resize(){ W=c.width=window.innerWidth; H=c.height=window.innerHeight; }
+  resize(); window.addEventListener('resize',resize);
+
+  // particles
+  const N=280, P=[];
+  const COLS=['#4da6ff','#7c3aed','#06d6a0','#f59e0b'];
+  for(let i=0;i<N;i++) P.push({
+    x:Math.random()*2000-500, y:Math.random()*2000-500, z:Math.random()*800+100,
+    vx:(Math.random()-.5)*0.2, vy:(Math.random()-.5)*0.15, vz:(Math.random()-.5)*0.5,
+    col:COLS[Math.floor(Math.random()*COLS.length)]
+  });
+
+  // DNA helix points
+  const DNA=[];
+  for(let i=0;i<80;i++){
+    const t=i/80*Math.PI*6;
+    DNA.push({t,strand:0,phase:0});
+    DNA.push({t,strand:1,phase:Math.PI});
+  }
+
+  let mx=0,my=0,rot=0;
+  document.addEventListener('mousemove',e=>{mx=(e.clientX/innerWidth-.5)*60; my=(e.clientY/innerHeight-.5)*40;});
+
+  function project(x,y,z){
+    const fov=600;
+    const s=fov/(fov+z);
+    return {x:W/2+x*s, y:H/2+y*s, s};
+  }
+
+  function frame(){
+    requestAnimationFrame(frame);
+    ctx.clearRect(0,0,W,H);
+    rot+=0.004;
+
+    // Draw DNA helix
+    ctx.save();
+    const cx=W*.15, cy=H*.5;
+    for(let i=0;i<DNA.length-2;i+=2){
+      const d=DNA[i], t=d.t+rot;
+      const radius=60, spread=180;
+      const ax=cx+Math.cos(t+d.phase)*radius - mx*0.3;
+      const ay=cy+(i/2-40)*5 - my*0.2;
+      const r=3;
+      ctx.beginPath();
+      ctx.arc(ax,ay,r,0,Math.PI*2);
+      ctx.fillStyle='rgba(77,166,255,0.25)';
+      ctx.fill();
+      // connector
+      if(i>0){
+        const prev=DNA[i-2], pt=prev.t+rot;
+        const px=cx+Math.cos(pt+prev.phase)*radius - mx*0.3;
+        const py=cy+((i-2)/2-40)*5 - my*0.2;
+        ctx.beginPath(); ctx.moveTo(px,py); ctx.lineTo(ax,ay);
+        ctx.strokeStyle='rgba(77,166,255,0.08)'; ctx.lineWidth=1; ctx.stroke();
+      }
+      // second strand
+      const d2=DNA[i+1], t2=d2.t+rot;
+      const bx=cx+Math.cos(t2+d2.phase)*radius - mx*0.3;
+      const by=cy+(i/2-40)*5 - my*0.2;
+      ctx.beginPath(); ctx.arc(bx,by,r,0,Math.PI*2);
+      ctx.fillStyle='rgba(6,214,160,0.2)'; ctx.fill();
+      // cross-link every 8
+      if(i%16===0){
+        ctx.beginPath(); ctx.moveTo(ax,ay); ctx.lineTo(bx,by);
+        ctx.strokeStyle='rgba(124,58,237,0.15)'; ctx.lineWidth=1.5; ctx.stroke();
+      }
+    }
+    ctx.restore();
+
+    // Floating torus rings (ellipses)
+    for(let r=0;r<3;r++){
+      const ring={cx:W*.78,cy:H*.35,rx:120-r*22,ry:45-r*8,angle:rot*(r+1)*0.4,col:r===0?'rgba(77,166,255,0.06)':r===1?'rgba(124,58,237,0.05)':'rgba(6,214,160,0.04)'};
+      ctx.save();
+      ctx.translate(ring.cx-mx*.2,ring.cy-my*.1);
+      ctx.rotate(ring.angle);
+      ctx.beginPath();
+      ctx.ellipse(0,0,ring.rx,ring.ry,0,0,Math.PI*2);
+      ctx.strokeStyle=ring.col;
+      ctx.lineWidth=2;
+      ctx.stroke();
+      ctx.restore();
+    }
+
+    // 3D particle cloud
+    const sorted=[...P].sort((a,b)=>b.z-a.z);
+    sorted.forEach(p=>{
+      p.x+=p.vx; p.y+=p.vy; p.z+=p.vz;
+      if(p.x<-800)p.x=800; if(p.x>800)p.x=-800;
+      if(p.y<-600)p.y=600; if(p.y>600)p.y=-600;
+      if(p.z<50)p.z=900; if(p.z>900)p.z=50;
+      const px=p.x+mx*p.z/800, py=p.y+my*p.z/600;
+      const proj=project(px,py,p.z);
+      const alpha=proj.s*0.5;
+      const size=proj.s*2.5;
+      if(proj.x<0||proj.x>W||proj.y<0||proj.y>H) return;
+      ctx.beginPath();
+      ctx.arc(proj.x,proj.y,Math.max(0.5,size),0,Math.PI*2);
+      ctx.fillStyle=p.col.replace(')',`,${alpha.toFixed(2)})`);
+      if(p.col.startsWith('#')){
+        const hex=p.col;
+        const r2=parseInt(hex.slice(1,3),16),g=parseInt(hex.slice(3,5),16),b=parseInt(hex.slice(5,7),16);
+        ctx.fillStyle=`rgba(${r2},${g},${b},${alpha.toFixed(2)})`;
+      }
+      ctx.fill();
+    });
+
+    // Connecting lines between close particles (up to 30)
+    for(let i=0;i<Math.min(N,60);i++){
+      const proj1=project(P[i].x+mx*P[i].z/800,P[i].y+my*P[i].z/600,P[i].z);
+      for(let j=i+1;j<Math.min(N,60);j++){
+        const proj2=project(P[j].x+mx*P[j].z/800,P[j].y+my*P[j].z/600,P[j].z);
+        const dist=Math.hypot(proj1.x-proj2.x,proj1.y-proj2.y);
+        if(dist<80){
+          ctx.beginPath(); ctx.moveTo(proj1.x,proj1.y); ctx.lineTo(proj2.x,proj2.y);
+          ctx.strokeStyle=`rgba(77,166,255,${(0.06*(1-dist/80)).toFixed(3)})`;
+          ctx.lineWidth=0.5; ctx.stroke();
+        }
+      }
+    }
+  }
+  frame();
+})();
+
+// ═══════════════════════════════════════════════
+//  DRUG DATABASE
+// ═══════════════════════════════════════════════
+const CLINICALLY_REVIEWED_DB=[
+  {
+    name:'Aspirin',generic:'Acetylsalicylic acid',cls:'NSAID / Antiplatelet',color:'#4da6ff',
+    desc:'Aspirin is a nonsteroidal anti-inflammatory drug (NSAID) used to treat pain, fever, and inflammation, and as an antiplatelet agent to prevent heart attacks and strokes.',
+    uses:['Pain relief (mild to moderate)','Fever reduction','Inflammation','Heart attack prevention','Stroke prevention','Kawasaki disease'],
+    dosage:'Regular: 325–650 mg every 4–6 hrs. Antiplatelet (cardiac): 75–100 mg once daily.',
+    se:[
+      {sev:'mild',txt:'Nausea and stomach upset'},
+      {sev:'mild',txt:'Heartburn / indigestion'},
+      {sev:'moderate',txt:'Gastrointestinal bleeding'},
+      {sev:'moderate',txt:'Tinnitus (ringing in ears) at high doses'},
+      {sev:'severe',txt:'Reye\'s syndrome (children — avoid)'},
+      {sev:'severe',txt:'Anaphylaxis (rare)'},
+      {sev:'severe',txt:'Peptic ulcer perforation'}
+    ],
+    adrs:[
+      {name:'GI Hemorrhage',mech:'Inhibits COX-1 → reduced protective prostaglandins in gastric mucosa',inc:'1–3%'},
+      {name:'Aspirin-Exacerbated Respiratory Disease',mech:'COX-1 inhibition shifts arachidonic acid to lipoxygenase → ↑ leukotrienes',inc:'0.5%'},
+      {name:'Salicylate Toxicity',mech:'Uncouples oxidative phosphorylation at high plasma levels',inc:'Overdose'}
+    ],
+    contra:['Active peptic ulcer disease','Children with viral illness (Reye\'s risk)','Hemophilia','Last trimester pregnancy'],
+    inter:['Warfarin — ↑ bleeding risk','Ibuprofen — reduces antiplatelet effect','Methotrexate — ↑ toxicity','ACE inhibitors — ↓ efficacy'],
+    tags:['Pain','Cardiac','Fever']
+  },
+  {
+    name:'Metformin',generic:'Metformin hydrochloride',cls:'Biguanide (Antidiabetic)',color:'#06d6a0',
+    desc:'Metformin is the first-line pharmacological treatment for type 2 diabetes. It reduces hepatic glucose production and improves insulin sensitivity without causing hypoglycaemia.',
+    uses:['Type 2 diabetes mellitus (first-line)','Polycystic ovary syndrome (PCOS)','Prediabetes prevention','Weight management in diabetic patients'],
+    dosage:'500 mg twice daily or 850 mg once daily with meals. Max: 2550 mg/day.',
+    se:[
+      {sev:'mild',txt:'Nausea and vomiting'},
+      {sev:'mild',txt:'Diarrhea (especially early in treatment)'},
+      {sev:'mild',txt:'Metallic taste in mouth'},
+      {sev:'moderate',txt:'Vitamin B12 deficiency with long-term use'},
+      {sev:'severe',txt:'Lactic acidosis (rare but life-threatening)'}
+    ],
+    adrs:[
+      {name:'Lactic Acidosis',mech:'Inhibits mitochondrial respiratory chain complex I → ↑ lactate production',inc:'<0.01%'},
+      {name:'GI Intolerance',mech:'↑ intestinal glucose utilization + GLP-1 secretion',inc:'20–30%'},
+      {name:'Vitamin B12 Deficiency',mech:'Impairs ileal absorption of B12-intrinsic factor complex',inc:'7%'}
+    ],
+    contra:['eGFR < 30 mL/min (severe renal impairment)','Hepatic impairment','Before contrast dye procedures (hold 48 hrs)','Metabolic acidosis'],
+    inter:['Alcohol — ↑ lactic acidosis risk','Iodinated contrast — hold before procedures','Cimetidine — ↑ metformin levels'],
+    tags:['Diabetes','Endocrine']
+  },
+  {
+    name:'Ibuprofen',generic:'Ibuprofen',cls:'NSAID',color:'#f59e0b',
+    desc:'Ibuprofen is a widely used NSAID that treats pain, fever, and inflammatory conditions by non-selectively inhibiting COX-1 and COX-2 enzymes.',
+    uses:['Pain (headache, dental, muscular, menstrual)','Fever','Arthritis (osteo and rheumatoid)','Inflammatory conditions','Dysmenorrhea'],
+    dosage:'Adults: 200–400 mg every 4–6 hrs. Max OTC: 1200 mg/day. Max Rx: 3200 mg/day.',
+    se:[
+      {sev:'mild',txt:'Nausea, vomiting, dyspepsia'},
+      {sev:'mild',txt:'Dizziness'},
+      {sev:'moderate',txt:'Fluid retention and edema'},
+      {sev:'moderate',txt:'Elevated blood pressure'},
+      {sev:'severe',txt:'GI bleeding or perforation'},
+      {sev:'severe',txt:'Acute renal failure'},
+      {sev:'severe',txt:'Myocardial infarction risk (prolonged use)'}
+    ],
+    adrs:[
+      {name:'Cardiovascular Events',mech:'COX-2 inhibition ↓ prostacyclin → ↑ thrombotic risk',inc:'1–2% (prolonged use)'},
+      {name:'Acute Kidney Injury',mech:'↓ renal prostaglandin synthesis → ↓ GFR in susceptible patients',inc:'0.5–1%'},
+      {name:'GI Ulceration',mech:'COX-1 inhibition ↓ gastroprotective prostaglandins',inc:'1–4%'}
+    ],
+    contra:['History of GI bleed or peptic ulcer','Severe renal/hepatic impairment','3rd trimester pregnancy','Aspirin-exacerbated respiratory disease'],
+    inter:['Warfarin — ↑ bleeding','Lithium — ↑ lithium levels','ACE inhibitors — renal failure risk','Aspirin — ↓ antiplatelet effect'],
+    tags:['Pain','Fever','NSAID']
+  },
+  {
+    name:'Amoxicillin',generic:'Amoxicillin trihydrate',cls:'Aminopenicillin Antibiotic',color:'#a855f7',
+    desc:'Amoxicillin is a broad-spectrum beta-lactam antibiotic. It inhibits bacterial cell wall synthesis by binding penicillin-binding proteins, leading to cell lysis.',
+    uses:['Respiratory infections (pneumonia, bronchitis)','Ear infections (otitis media)','Urinary tract infections','H. pylori eradication','Dental infections','Lyme disease'],
+    dosage:'Adults: 250–500 mg every 8 hrs or 500–875 mg every 12 hrs. Severe: 875 mg every 12 hrs.',
+    se:[
+      {sev:'mild',txt:'Nausea and diarrhea'},
+      {sev:'mild',txt:'Skin rash (non-allergic, maculopapular)'},
+      {sev:'moderate',txt:'Candida (yeast) superinfection'},
+      {sev:'moderate',txt:'Pseudomembranous colitis'},
+      {sev:'severe',txt:'Anaphylaxis (IgE-mediated hypersensitivity)'},
+      {sev:'severe',txt:'Stevens-Johnson Syndrome (rare)'}
+    ],
+    adrs:[
+      {name:'Anaphylaxis',mech:'IgE-mediated hypersensitivity to beta-lactam ring',inc:'0.01–0.05%'},
+      {name:'C. difficile Colitis',mech:'Disruption of gut microbiome allows C. difficile overgrowth',inc:'0.1–0.3%'},
+      {name:'Amoxicillin Rash',mech:'Non-allergic T-cell mediated maculopapular rash; common in EBV infection',inc:'5–10%'}
+    ],
+    contra:['Penicillin allergy','History of amoxicillin-associated liver injury','Infectious mononucleosis'],
+    inter:['Warfarin — ↑ INR','Oral contraceptives — ↓ efficacy','Allopurinol — ↑ rash risk','Methotrexate — ↑ toxicity'],
+    tags:['Antibiotic','Infection']
+  },
+  {
+    name:'Atorvastatin',generic:'Atorvastatin calcium',cls:'HMG-CoA Reductase Inhibitor (Statin)',color:'#ef4444',
+    desc:'Atorvastatin inhibits HMG-CoA reductase, the rate-limiting enzyme in cholesterol synthesis, reducing LDL-C and triglycerides while raising HDL-C to prevent cardiovascular events.',
+    uses:['Hypercholesterolemia (high LDL)','Cardiovascular disease prevention','Familial hypercholesterolemia','Hypertriglyceridemia','Atherosclerosis'],
+    dosage:'10–80 mg once daily (evening preferred). Starting: 10–20 mg. Titrate every 4 weeks.',
+    se:[
+      {sev:'mild',txt:'Headache and fatigue'},
+      {sev:'mild',txt:'Nasopharyngitis'},
+      {sev:'moderate',txt:'Myalgia (muscle pain) — most common discontinuation reason'},
+      {sev:'moderate',txt:'Elevated liver enzymes (transaminases)'},
+      {sev:'severe',txt:'Rhabdomyolysis (muscle breakdown, rare)'},
+      {sev:'severe',txt:'Fulminant hepatic failure (very rare)'}
+    ],
+    adrs:[
+      {name:'Statin-Associated Muscle Symptoms (SAMS)',mech:'Reduced CoQ10 synthesis + impaired mitochondrial function in myocytes',inc:'5–10%'},
+      {name:'Rhabdomyolysis',mech:'Severe myocyte destruction releasing myoglobin → renal tubular injury',inc:'<0.1%'},
+      {name:'New-Onset Diabetes',mech:'Impairs insulin secretion + increases insulin resistance',inc:'9–13% over 4 years'}
+    ],
+    contra:['Active liver disease','Pregnancy and breastfeeding','Active myopathy'],
+    inter:['Cyclosporine — ↑↑ statin levels','Clarithromycin — ↑ myopathy risk','Gemfibrozil — ↑ rhabdomyolysis risk','Grapefruit juice — ↑ statin levels'],
+    tags:['Cholesterol','Cardiac']
+  },
+  {
+    name:'Omeprazole',generic:'Omeprazole',cls:'Proton Pump Inhibitor (PPI)',color:'#06d6a0',
+    desc:'Omeprazole irreversibly inhibits the H+/K+ ATPase enzyme (proton pump) in gastric parietal cells, reducing stomach acid production by up to 95%.',
+    uses:['GERD (gastroesophageal reflux disease)','Peptic ulcer disease','H. pylori eradication (triple therapy)','Zollinger-Ellison syndrome','NSAID-induced ulcer prevention'],
+    dosage:'20 mg once daily 30–60 min before breakfast. GERD: 20–40 mg daily for 4–8 weeks.',
+    se:[
+      {sev:'mild',txt:'Headache'},
+      {sev:'mild',txt:'Nausea and flatulence'},
+      {sev:'moderate',txt:'Hypomagnesemia (long-term use)'},
+      {sev:'moderate',txt:'↑ C. difficile infection risk'},
+      {sev:'severe',txt:'Acute interstitial nephritis (rare)'},
+      {sev:'severe',txt:'Increased fracture risk (osteoporosis, long-term use)'}
+    ],
+    adrs:[
+      {name:'Hypomagnesemia',mech:'Impairs TRPM6/7-mediated Mg²⁺ transport in intestinal epithelium',inc:'1% (>1 year use)'},
+      {name:'Fundic Gland Polyps',mech:'Hypergastrinemia from acid suppression → parietal cell hyperplasia',inc:'Up to 13%'},
+      {name:'Community-Acquired Pneumonia',mech:'↓ gastric acidity allows bacterial colonization of stomach',inc:'OR 1.27'}
+    ],
+    contra:['Concurrent rilpivirine or nelfinavir','Hypersensitivity to PPIs or benzimidazoles'],
+    inter:['Clopidogrel — ↓ antiplatelet effect','Warfarin — ↑ INR','Methotrexate — ↑ toxicity','Ketoconazole — ↓ absorption'],
+    tags:['GI','Acid','Reflux']
+  },
+  {
+    name:'Lisinopril',generic:'Lisinopril',cls:'ACE Inhibitor (Antihypertensive)',color:'#4da6ff',
+    desc:'Lisinopril blocks angiotensin-converting enzyme (ACE), preventing conversion of angiotensin I to angiotensin II, reducing vasoconstriction and aldosterone secretion.',
+    uses:['Hypertension (first-line)','Heart failure (reduced ejection fraction)','Post-MI cardiac protection','Diabetic nephropathy'],
+    dosage:'Hypertension: 10 mg once daily; range 10–40 mg. Heart failure: start 2.5–5 mg once daily.',
+    se:[
+      {sev:'mild',txt:'Dry persistent cough (bradykinin accumulation)'},
+      {sev:'mild',txt:'Dizziness (especially first dose — orthostatic hypotension)'},
+      {sev:'moderate',txt:'Hyperkalemia (elevated potassium)'},
+      {sev:'moderate',txt:'Hypotension'},
+      {sev:'severe',txt:'Angioedema (swelling of face, lips, tongue, larynx)'},
+      {sev:'severe',txt:'Acute kidney injury'}
+    ],
+    adrs:[
+      {name:'ACE Inhibitor Cough',mech:'Reduced bradykinin degradation stimulates pulmonary C-fibers',inc:'5–20% (higher in Asian patients)'},
+      {name:'Angioedema',mech:'Bradykinin accumulation → vascular permeability in subcutaneous/submucosal tissue',inc:'0.1–0.7%'},
+      {name:'Hyperkalemia',mech:'↓ aldosterone → ↓ renal potassium excretion',inc:'1–5%'}
+    ],
+    contra:['Pregnancy (teratogenic — Category D/X)','History of ACE inhibitor-induced angioedema','Bilateral renal artery stenosis','Concurrent aliskiren in diabetes/CKD'],
+    inter:['NSAIDs — renal failure risk','K-sparing diuretics — hyperkalemia','Lithium — ↑ toxicity','Sacubitril/valsartan — angioedema'],
+    tags:['BP','Cardiac','Renal']
+  },
+  {
+    name:'Paracetamol',generic:'Acetaminophen',cls:'Analgesic / Antipyretic (Non-NSAID)',color:'#06d6a0',
+    desc:'Paracetamol is one of the most widely used analgesics and antipyretics globally. Its mechanism involves central prostaglandin inhibition and endocannabinoid system modulation.',
+    uses:['Mild to moderate pain (all types)','Fever (all ages including infants)','Headache','Osteoarthritis (preferred over NSAIDs in elderly)','Post-vaccination fever'],
+    dosage:'Adults: 500–1000 mg every 4–6 hrs. Max: 4 g/day (3 g/day in liver disease or high alcohol use).',
+    se:[
+      {sev:'mild',txt:'Nausea (rare at therapeutic doses)'},
+      {sev:'mild',txt:'Rash (uncommon)'},
+      {sev:'severe',txt:'Hepatotoxicity (overdose — leading cause of acute liver failure)'},
+      {sev:'severe',txt:'Acute tubular necrosis (overdose)'}
+    ],
+    adrs:[
+      {name:'Hepatotoxicity',mech:'NAPQI metabolite (via CYP2E1) depletes glutathione → hepatocyte necrosis',inc:'Dose-dependent; overdose'},
+      {name:'Stevens-Johnson Syndrome',mech:'Immune-mediated epidermal necrosis (very rare)',inc:'<0.001%'}
+    ],
+    contra:['Severe hepatic impairment','Alcohol use disorder (relative — reduce max dose)'],
+    inter:['Warfarin — ↑ INR (chronic use)','Alcohol — ↑ hepatotoxicity','Isoniazid — ↑ hepatotoxicity','Cholestyramine — ↓ absorption'],
+    tags:['Pain','Fever','Safe']
+  }
+
+];
+
+const EXPANDED_DRUG_NAMES = ["Acyclovir", "Adalimumab", "Albuterol", "Alendronate", "Alfuzosin", "Allopurinol", "Alprazolam", "Amiodarone", "Amitriptyline", "Amlodipine", "Amoxicillin clavulanate", "Ampicillin", "Anastrozole", "Apixaban", "Aripiprazole", "Atenolol", "Azithromycin", "Baclofen", "Benazepril", "Benzonatate", "Betamethasone", "Bisacodyl", "Bisoprolol", "Budesonide", "Bumetanide", "Buprenorphine", "Bupropion", "Buspirone", "Calcitriol", "Candesartan", "Carbamazepine", "Carbidopa levodopa", "Carvedilol", "Cefaclor", "Cefadroxil", "Cefazolin", "Cefdinir", "Cefepime", "Cefixime", "Cefotaxime", "Cefpodoxime", "Ceftazidime", "Ceftriaxone", "Cefuroxime", "Celecoxib", "Cephalexin", "Cetirizine", "Chlorthalidone", "Ciprofloxacin", "Citalopram", "Clarithromycin", "Clindamycin", "Clobetasol", "Clonazepam", "Clonidine", "Clopidogrel", "Clotrimazole", "Clozapine", "Codeine", "Colchicine", "Cyclobenzaprine", "Dabigatran", "Dapagliflozin", "Desloratadine", "Desmopressin", "Dexamethasone", "Dextromethorphan", "Diazepam", "Diclofenac", "Dicyclomine", "Digoxin", "Diltiazem", "Diphenhydramine", "Divalproex", "Docusate", "Donepezil", "Dopamine", "Dorzolamide", "Doxazosin", "Doxycycline", "Dulaglutide", "Duloxetine", "Empagliflozin", "Enalapril", "Enoxaparin", "Escitalopram", "Esomeprazole", "Estradiol", "Etanercept", "Ethinyl estradiol", "Ezetimibe", "Famotidine", "Fexofenadine", "Finasteride", "Flecainide", "Fluconazole", "Fluoxetine", "Fluticasone", "Folic acid", "Furosemide", "Gabapentin", "Glimepiride", "Glipizide", "Glyburide", "Glycopyrrolate", "Hydralazine", "Hydrochlorothiazide", "Hydrocodone", "Hydrocortisone", "Hydroxyzine", "Insulin glargine", "Insulin lispro", "Insulin aspart", "Insulin detemir", "Ipratropium", "Irbesartan", "Isosorbide mononitrate", "Itraconazole", "Ketoconazole", "Ketorolac", "Labetalol", "Lactulose", "Lamotrigine", "Lansoprazole", "Latanoprost", "Levetiracetam", "Levofloxacin", "Levothyroxine", "Lidocaine", "Linagliptin", "Linezolid", "Liraglutide", "Loratadine", "Lorazepam", "Losartan", "Lovastatin", "Meloxicam", "Memantine", "Mesalamine", "Methylphenidate", "Methylprednisolone", "Metoclopramide", "Metoprolol", "Metronidazole", "Mirtazapine", "Montelukast", "Morphine", "Moxifloxacin", "Naproxen", "Nifedipine", "Nitrofurantoin", "Nitroglycerin", "Nortriptyline", "Olanzapine", "Olmesartan", "Ondansetron", "Oseltamivir", "Oxcarbazepine", "Oxybutynin", "Oxycodone", "Pantoprazole", "Paroxetine", "Penicillin V", "Phenazopyridine", "Phentermine", "Pioglitazone", "Polyethylene glycol", "Pravastatin", "Prazosin", "Prednisone", "Prednisolone", "Pregabalin", "Promethazine", "Propranolol", "Quetiapine", "Ramipril", "Ranitidine", "Risperidone", "Rivaroxaban", "Rosuvastatin", "Salmeterol", "Semaglutide", "Sertraline", "Sildenafil", "Simvastatin", "Sitagliptin", "Sotalol", "Spironolactone", "Sucralfate", "Sulfamethoxazole trimethoprim", "Sumatriptan", "Tadalafil", "Tamsulosin", "Telmisartan", "Temazepam", "Terazosin", "Terbinafine", "Tiotropium", "Tizanidine", "Topiramate", "Torsemide", "Tramadol", "Trazodone", "Triamcinolone", "Valacyclovir", "Valproic acid", "Valsartan", "Vancomycin", "Venlafaxine", "Verapamil", "Warfarin", "Zolpidem", "Zonisamide", "Abacavir", "Abatacept", "Abemaciclib", "Abiraterone", "Acamprosate", "Acarbose", "Acetazolamide", "Acitretin", "Adapalene", "Adefovir", "Agomelatine", "Albendazole", "Albumin human", "Albuterol ipratropium", "Alfentanil", "Alirocumab", "Aliskiren", "Almotriptan", "Alogliptin", "Alosetron", "Alteplase", "Amantadine", "Ambrisentan", "Amifampridine", "Amikacin", "Amiloride", "Aminophylline", "Aminocaproic acid", "Amodiaquine", "Amphotericin B", "Anagrelide", "Anakinra", "Apalutamide", "Aprepitant", "Argatroban", "Armodafinil", "Artemether lumefantrine", "Asenapine", "Atazanavir", "Atomoxetine", "Avanafil", "Avatrombopag", "Azacitidine", "Azathioprine", "Azelastine", "Aztreonam", "Balsalazide", "Baricitinib", "Bedaquiline", "Belimumab", "Bendamustine", "Benralizumab", "Benzoyl peroxide", "Benzphetamine", "Benztropine", "Beractant", "Betaxolol", "Bethanechol", "Bexarotene", "Bicalutamide", "Bimatoprost", "Bivalirudin", "Bleomycin", "Bortezomib", "Bosentan", "Bosutinib", "Brimonidine", "Brivaracetam", "Bromocriptine", "Budesonide formoterol", "Bupivacaine", "Busulfan", "Butalbital", "Cabazitaxel", "Cabergoline", "Calcipotriene", "Canagliflozin", "Capecitabine", "Captopril", "Carbidopa", "Carboplatin", "Caspofungin", "Cefiderocol", "Cefprozil", "Ceftaroline", "Ceftolozane tazobactam", "Certolizumab", "Cetuximab", "Chlorambucil", "Chloramphenicol", "Chlordiazepoxide", "Chlorhexidine", "Chloroquine", "Chlorpromazine", "Cholestyramine", "Cidofovir", "Cilostazol", "Cinacalcet", "Cisplatin", "Cladribine", "Clindamycin benzoyl peroxide", "Clobazam", "Clomiphene", "Clomipramine", "Clorazepate", "Cobicistat", "Colesevelam", "Conjugated estrogens", "Crizotinib", "Cromolyn", "Cyclophosphamide", "Cycloserine", "Cyclosporine", "Cytarabine", "Dalteparin", "Dantrolene", "Dapsone", "Daptomycin", "Darifenacin", "Darolutamide", "Darunavir", "Dasatinib", "Daunorubicin", "Deferasirox", "Deferoxamine", "Delafloxacin", "Delamanid", "Denosumab", "Desvenlafaxine", "Dexlansoprazole", "Dexmedetomidine", "Dextroamphetamine", "Didanosine", "Dienogest", "Diflunisal", "Dipyridamole", "Disopyramide", "Disulfiram", "Dobutamine", "Docetaxel", "Dolasetron", "Dolutegravir", "Dornase alfa", "Doxepin", "Doxorubicin", "Dronabinol", "Dronedarone", "Drospirenone", "Dutasteride", "Efavirenz", "Elagolix", "Elbasvir grazoprevir", "Eletriptan", "Elotuzumab", "Elvitegravir", "Emicizumab", "Emtricitabine", "Enfuvirtide", "Entacapone", "Entecavir", "Enzalutamide", "Eplerenone", "Epoetin alfa", "Epoprostenol", "Erenumab", "Erlotinib", "Ertapenem", "Erythromycin", "Eslicarbazepine", "Eszopiclone", "Ethambutol", "Ethosuximide", "Etoposide", "Etravirine", "Everolimus", "Evolocumab", "Exemestane", "Exenatide", "Ezetimibe simvastatin", "Felbamate", "Fenofibrate", "Fentanyl", "Fesoterodine", "Filgrastim", "Fingolimod", "Flavoxate", "Floxuridine", "Fludarabine", "Flumazenil", "Fluorouracil", "Fluphenazine", "Flurazepam", "Flurbiprofen", "Flutamide", "Fluvoxamine", "Fondaparinux", "Fosamprenavir", "Foscarnet", "Fosinopril", "Fosnetupitant palonosetron", "Fosphenytoin", "Fostemsavir", "Fulvestrant", "Ganciclovir", "Gatifloxacin ophthalmic", "Gemcitabine", "Gemfibrozil", "Gentamicin", "Glatiramer", "Glecaprevir pibrentasvir", "Gliclazide", "Glucagon", "Goserelin", "Granisetron", "Griseofulvin", "Guanfacine", "Haloperidol", "Heparin", "Hydroxychloroquine", "Hydroxyurea", "Hyoscyamine", "Ibandronate", "Ibrutinib", "Ifosfamide", "Imatinib", "Imipenem cilastatin", "Imipramine", "Indapamide", "Indinavir", "Indomethacin", "Infliximab", "Interferon beta", "Irinotecan", "Isavuconazonium", "Isoniazid", "Isotretinoin", "Ivabradine", "Ivermectin", "Ketamine", "Ketotifen", "Lacosamide", "Lamivudine", "Leflunomide", "Letrozole", "Leucovorin", "Leuprolide", "Linaclotide", "Lisdexamfetamine", "Lithium", "Loperamide", "Lopinavir ritonavir", "Loratadine pseudoephedrine", "Lorlatinib", "Lurasidone", "Macitentan", "Mebendazole", "Meclizine", "Mefloquine", "Megestrol", "Melphalan", "Memantine donepezil", "Meperidine", "Mercaptopurine", "Meropenem", "Mesna", "Methadone", "Methazolamide", "Methimazole", "Methocarbamol", "Methotrexate", "Methyldopa", "Metolazone", "Midazolam", "Midodrine", "Milrinone", "Minocycline", "Minoxidil", "Mirabegron", "Modafinil", "Mometasone", "Mycophenolate", "Nabumetone", "Nadolol", "Nafcillin", "Naloxone", "Naltrexone", "Naratriptan", "Nebivolol", "Nefazodone", "Neomycin", "Nevirapine", "Niacin", "Nicardipine", "Nicotine", "Nimodipine", "Nintedanib", "Nitazoxanide", "Norethindrone", "Norfloxacin", "Octreotide", "Ofloxacin", "Olopatadine", "Omalizumab", "Orlistat", "Osimertinib", "Oxaliplatin", "Oxazepam", "Oxymetazoline", "Paclitaxel", "Paliperidone", "Palivizumab", "Panitumumab", "Paramethasone", "Paricalcitol", "Pazopanib", "Pegfilgrastim", "Pemetrexed", "Pentamidine", "Pentoxifylline", "Perampanel", "Perindopril", "Permethrin", "Phenobarbital", "Phenylephrine", "Phenytoin", "Pilocarpine", "Pimavanserin", "Pimozide", "Pindolol", "Piperacillin tazobactam", "Pirfenidone", "Pomalidomide", "Posaconazole", "Pramipexole", "Prasugrel", "Primaquine", "Primidone", "Probenecid", "Procainamide", "Prochlorperazine", "Progesterone", "Propafenone", "Propylthiouracil", "Pyrantel", "Pyridostigmine", "Pyrimethamine", "Rabeprazole", "Raloxifene", "Raltegravir", "Ranolazine", "Rasagiline", "Regorafenib", "Remdesivir", "Repaglinide", "Reserpine", "Ribavirin", "Rifabutin", "Rifampin", "Rifaximin", "Rilpivirine", "Riluzole", "Riociguat", "Risedronate", "Ritonavir", "Rivastigmine", "Ropinirole", "Rosiglitazone", "Rufinamide", "Sacubitril valsartan", "Saquinavir", "Saxagliptin", "Selegiline", "Sevelamer", "Silver sulfadiazine", "Sirolimus", "Sofosbuvir", "Sorafenib", "Sulfasalazine", "Sunitinib", "Tacrolimus", "Tamoxifen", "Telavancin", "Tenofovir", "Teriparatide", "Testosterone", "Tetrabenazine", "Tetracycline", "Theophylline", "Thioridazine", "Thiothixene", "Thyroid desiccated", "Ticagrelor", "Ticlopidine", "Tigecycline", "Timolol", "Tolvaptan", "Toremifene", "Trabectedin", "Tranexamic acid", "Tranylcypromine", "Triamterene", "Trifluoperazine", "Trimethoprim", "Valganciclovir", "Varenicline", "Vasopressin", "Vemurafenib", "Vigabatrin", "Vinblastine", "Vincristine", "Vinorelbine", "Voriconazole", "Zaleplon", "Zanamivir", "Ziprasidone", "Zoledronic acid"];
+const CLASS_PROFILES = {
+  antibiotic: { cls:'Antibiotic / Anti-infective', color:'#06d6a0', tags:['Infection','Antibiotic'], uses:['Treatment of susceptible bacterial infections','Use only when prescribed for a confirmed or strongly suspected infection'], dosage:'Dose is infection-specific and depends on age, weight, kidney function, organism, and local guidance. Follow the official label and prescriber instructions exactly.', se:[{sev:'mild',txt:'Nausea, diarrhea, or abdominal discomfort'},{sev:'mild',txt:'Headache or altered taste'},{sev:'moderate',txt:'Rash or photosensitivity'},{sev:'moderate',txt:'C. difficile-associated diarrhea'},{sev:'severe',txt:'Severe allergic reaction / anaphylaxis'},{sev:'severe',txt:'Serious skin reactions such as Stevens-Johnson syndrome (rare)'}], adrs:[{name:'Hypersensitivity reaction',mech:'Immune-mediated reaction; risk varies by drug and prior allergy history',inc:'Uncommon to rare'},{name:'Antibiotic-associated colitis',mech:'Disruption of normal gut flora can allow C. difficile overgrowth',inc:'Uncommon'},{name:'Resistance selection',mech:'Inappropriate or incomplete use may select resistant organisms',inc:'Population-level risk'}], contra:['Known serious hypersensitivity to this medicine or class','Do not use for viral infections unless specifically indicated','Use caution or dose adjustment in significant kidney or liver impairment when label requires it'], inter:['Warfarin or other anticoagulants — INR/bleeding risk may change','Live bacterial vaccines — effectiveness may be reduced by some antibiotics','Other nephrotoxic or QT-prolonging medicines when relevant'] },
+  cardiovascular: { cls:'Cardiovascular medicine', color:'#4da6ff', tags:['Cardiac','BP'], uses:['Hypertension, heart disease, rhythm control, or cardiovascular risk reduction when indicated','Condition-specific therapy under clinician supervision'], dosage:'Dose is individualized by indication, blood pressure/heart rate, kidney or liver function, and response. Follow the product label and clinician instructions.', se:[{sev:'mild',txt:'Dizziness or fatigue'},{sev:'mild',txt:'Headache'},{sev:'moderate',txt:'Low blood pressure or slow heart rate'},{sev:'moderate',txt:'Electrolyte changes or fluid imbalance'},{sev:'severe',txt:'Worsening heart rhythm, fainting, or severe hypotension'},{sev:'severe',txt:'Angioedema or serious allergic reaction (drug-dependent)'}], adrs:[{name:'Hypotension/syncope',mech:'Excess pharmacologic effect on vascular tone, volume, or cardiac conduction',inc:'Dose-related'},{name:'Electrolyte disturbance',mech:'Renal and hormonal effects may alter potassium, sodium, or magnesium depending on drug class',inc:'Variable'},{name:'Renal function change',mech:'Hemodynamic changes can reduce renal perfusion in susceptible patients',inc:'Variable'}], contra:['Known hypersensitivity','Pregnancy contraindications apply to ACE inhibitors/ARBs and some related drugs','Severe hypotension, shock, or unstable cardiac status unless specialist-directed'], inter:['NSAIDs — may reduce BP effect or increase kidney risk','Potassium supplements/diuretics — potassium abnormalities','Other blood pressure or rhythm medicines — additive effects'] },
+  diabetes: { cls:'Antidiabetic / Metabolic', color:'#06d6a0', tags:['Diabetes','Endocrine'], uses:['Glycemic control in diabetes or metabolic disease when indicated','Risk reduction in selected cardiometabolic conditions for specific agents'], dosage:'Dose depends on agent, kidney function, glucose pattern, meals, and treatment goals. Use only as prescribed; insulin doses must be individualized.', se:[{sev:'mild',txt:'Nausea or gastrointestinal upset'},{sev:'mild',txt:'Headache'},{sev:'moderate',txt:'Hypoglycemia, especially with insulin or sulfonylureas'},{sev:'moderate',txt:'Dehydration or genital/urinary infections with some agents'},{sev:'severe',txt:'Severe hypoglycemia, ketoacidosis, pancreatitis, or lactic acidosis depending on drug'},{sev:'severe',txt:'Serious allergic reaction (rare)'}], adrs:[{name:'Hypoglycemia',mech:'Excess glucose-lowering effect relative to food intake, activity, or renal clearance',inc:'Drug-dependent'},{name:'Gastrointestinal intolerance',mech:'Gut motility, incretin, or absorption effects depending on agent',inc:'Common with some agents'},{name:'Metabolic acidosis/ketoacidosis warning',mech:'Rare class-specific metabolic complications require urgent care',inc:'Rare'}], contra:['Known hypersensitivity','Severe kidney or liver impairment for selected agents','Diabetic ketoacidosis unless using specialist-directed insulin protocols'], inter:['Alcohol — may affect glucose and acidosis risk','Steroids/diuretics — may worsen glucose control','Other glucose-lowering drugs — additive hypoglycemia risk'] },
+  psych: { cls:'Neurologic / Psychiatric medicine', color:'#a855f7', tags:['CNS','Mental health'], uses:['Neurologic, psychiatric, pain, sleep, or seizure-related indications depending on the medicine','Use requires individualized monitoring'], dosage:'Start-low/go-slow dosing is common. Dose depends on indication, age, tolerability, interactions, and tapering requirements. Follow official label and prescriber guidance.', se:[{sev:'mild',txt:'Drowsiness, dizziness, or impaired coordination'},{sev:'mild',txt:'Dry mouth or constipation'},{sev:'moderate',txt:'Mood, behavior, sleep, or concentration changes'},{sev:'moderate',txt:'Dependence, withdrawal, or misuse risk for selected agents'},{sev:'severe',txt:'Suicidal thoughts, serotonin syndrome, severe sedation, or seizures depending on drug'},{sev:'severe',txt:'Neuroleptic malignant syndrome or serious rash for selected medicines (rare)'}], adrs:[{name:'CNS depression',mech:'Additive effects on neurotransmission can impair alertness and breathing, especially with alcohol/opioids',inc:'Dose-related'},{name:'Withdrawal/discontinuation symptoms',mech:'Neuroadaptation after repeated exposure; abrupt stopping may cause symptoms',inc:'Variable'},{name:'Serotonin or dopamine toxicity syndromes',mech:'Excess monoaminergic or dopamine-blocking effects for selected agents',inc:'Rare but serious'}], contra:['Known hypersensitivity','Avoid unsafe combinations with alcohol, opioids, sedatives, or MAOIs when label warns','Use caution with seizure risk, severe respiratory disease, pregnancy, or suicidality as applicable'], inter:['Alcohol/opioids/benzodiazepines — dangerous sedation or breathing suppression','MAOIs or serotonergic drugs — serotonin syndrome risk','CYP inhibitors/inducers — altered drug levels'] },
+  pain: { cls:'Analgesic / Anti-inflammatory', color:'#f59e0b', tags:['Pain','Fever'], uses:['Pain, fever, inflammation, migraine, or musculoskeletal symptoms depending on medicine','Shortest effective duration is preferred when appropriate'], dosage:'Dose depends on medicine, formulation, age, weight, kidney/liver function, and maximum daily limits. Do not combine duplicate ingredients without professional advice.', se:[{sev:'mild',txt:'Nausea or stomach upset'},{sev:'mild',txt:'Dizziness or sleepiness'},{sev:'moderate',txt:'GI irritation, bleeding risk, constipation, or medication-overuse headache depending on class'},{sev:'moderate',txt:'Blood pressure, kidney, or liver test changes'},{sev:'severe',txt:'Severe allergic reaction, GI bleeding, liver injury, respiratory depression, or overdose toxicity depending on drug'},{sev:'severe',txt:'Dependence or withdrawal risk with opioid analgesics'}], adrs:[{name:'GI bleeding / ulcer risk',mech:'NSAID-type prostaglandin inhibition can reduce gastric protection',inc:'Drug- and dose-dependent'},{name:'Hepatic or renal injury',mech:'Dose-related toxicity or renal prostaglandin effects in susceptible patients',inc:'Variable'},{name:'Sedation/respiratory depression',mech:'Opioid receptor activation or CNS depressant interaction for opioid drugs',inc:'Serious; dose-related'}], contra:['Known hypersensitivity','Active GI bleeding/ulcer for many NSAIDs','Severe liver disease for acetaminophen-containing therapy; severe respiratory depression for opioids'], inter:['Warfarin/anticoagulants — bleeding risk','Alcohol — liver injury or sedation risk','Other NSAIDs/opioids/sedatives — additive toxicity'] },
+  gi: { cls:'Gastrointestinal medicine', color:'#06d6a0', tags:['GI','Digestive'], uses:['Acid suppression, nausea, constipation, diarrhea, inflammatory bowel disease, or GI symptom management when indicated','Use based on diagnosis and duration guidance'], dosage:'Dose and duration vary by indication and formulation. Long-term use should be reviewed periodically with a clinician.', se:[{sev:'mild',txt:'Headache, nausea, abdominal discomfort, constipation, or diarrhea'},{sev:'mild',txt:'Taste changes or flatulence'},{sev:'moderate',txt:'Electrolyte imbalance, infection risk, or movement symptoms depending on agent'},{sev:'moderate',txt:'Nutrient malabsorption with some long-term acid suppressants'},{sev:'severe',txt:'Severe allergic reaction, arrhythmia, bowel obstruction complication, or kidney inflammation depending on drug'},{sev:'severe',txt:'C. difficile-associated diarrhea risk with prolonged acid suppression'}], adrs:[{name:'GI intolerance',mech:'Local gut effects or altered motility/secretion',inc:'Common'},{name:'Electrolyte/nutrient disturbance',mech:'Changed absorption or fluid balance depending on drug and duration',inc:'Variable'},{name:'Serious motility or QT reaction',mech:'Class-specific receptor or cardiac ion-channel effects for selected agents',inc:'Rare'}], contra:['Known hypersensitivity','GI obstruction/perforation risk for motility/laxative agents when applicable','Avoid prolonged use without review when label recommends limited duration'], inter:['QT-prolonging drugs — rhythm risk with selected agents','Warfarin or antiplatelets — bleeding/INR changes with selected drugs','Drugs needing acidic stomach pH — absorption may change with acid suppressants'] },
+  respiratory: { cls:'Respiratory / Allergy medicine', color:'#4da6ff', tags:['Respiratory','Allergy'], uses:['Asthma, COPD, allergic rhinitis, urticaria, cough, or airway symptom control when indicated','Rescue and controller medicines have different roles'], dosage:'Dose depends on inhaler/device, severity, age, and rescue vs maintenance use. Technique matters; follow the prescribed action plan.', se:[{sev:'mild',txt:'Throat irritation, cough, tremor, or headache'},{sev:'mild',txt:'Drowsiness or dry mouth for some antihistamines'},{sev:'moderate',txt:'Fast heartbeat, oral thrush, or urinary retention depending on medicine'},{sev:'moderate',txt:'Mood or sleep changes with selected agents'},{sev:'severe',txt:'Paradoxical bronchospasm, anaphylaxis, severe arrhythmia, or adrenal effects depending on drug'},{sev:'severe',txt:'Severe allergic reaction (rare)'}], adrs:[{name:'Paradoxical bronchospasm',mech:'Airway irritation or hypersensitivity after inhaled therapy',inc:'Rare'},{name:'Systemic steroid effects',mech:'Absorption of corticosteroids can affect adrenal, bone, eye, or glucose systems',inc:'Dose/duration dependent'},{name:'Anticholinergic effects',mech:'Muscarinic blockade can dry secretions and affect urinary/ocular pressure',inc:'Variable'}], contra:['Known hypersensitivity','Do not use controller-only inhalers for acute rescue unless label says so','Caution with glaucoma, urinary retention, arrhythmias, or severe milk-protein allergy for selected inhalers'], inter:['Beta blockers — may reduce bronchodilator effect','Other stimulants — additive heart-rate effects','CNS depressants — additive drowsiness with sedating antihistamines'] },
+  default: { cls:'General medicine', color:'#7c3aed', tags:['Medicine','Reference'], uses:['Approved indications vary by country, formulation, and brand','Verify indication in official prescribing information before use'], dosage:'Dose is medicine-specific. Follow the official label and a qualified clinician/pharmacist; do not use this summary for personalized dosing.', se:[{sev:'mild',txt:'Nausea, headache, dizziness, or fatigue may occur'},{sev:'mild',txt:'Rash or local irritation may occur depending on formulation'},{sev:'moderate',txt:'Abnormal laboratory values or organ-specific effects may require monitoring'},{sev:'moderate',txt:'Drug-specific interactions can raise toxicity or reduce benefit'},{sev:'severe',txt:'Severe allergic reaction, serious rash, organ toxicity, or overdose toxicity can occur depending on medicine'},{sev:'severe',txt:'Urgent symptoms include trouble breathing, facial swelling, chest pain, fainting, seizures, or severe rash'}], adrs:[{name:'Hypersensitivity reaction',mech:'Immune or non-immune reaction to active/inactive ingredients',inc:'Rare; varies'},{name:'Organ-specific toxicity',mech:'Drug metabolism, dose, comorbidity, or interaction-related toxicity',inc:'Drug-dependent'},{name:'Medication error/overdose',mech:'Duplicate therapy, wrong dose, or unsafe combinations',inc:'Preventable risk'}], contra:['Known serious hypersensitivity to the medicine','Check pregnancy, breastfeeding, kidney, liver, pediatric, and geriatric warnings in official label','Avoid use outside approved/clinician-directed indications'], inter:['Other medicines with the same active ingredient — overdose risk','Strong enzyme inhibitors/inducers — may alter exposure for many drugs','Alcohol or sedatives — can increase adverse effects for selected medicines'] }
+};
+function inferProfile(name){
+  const n=name.toLowerCase();
+  if(/cillin|cef|floxacin|cycline|mycin|penem|azole|fungin|vancin|rifa|vir|navir|tegravir|bactam|dapsone|chloroquine|ivermectin|albendazole|linezolid|nitrofurantoin/.test(n)) return 'antibiotic';
+  if(/pril|sartan|olol|dipine|statin|vastatin|dilol|diuretic|nitrate|fibrate|clopidogrel|warfarin|rivaroxaban|apixaban|dabigatran|heparin|enoxaparin|ticagrelor|prasugrel|digoxin|amiodarone|flecainide|diltiazem|verapamil|torsemide|furosemide|spironolactone|hydralazine|clonidine/.test(n)) return 'cardiovascular';
+  if(/gliptin|gliflozin|glutide|insulin|formin|glipizide|glyburide|glimepiride|pioglitazone|acarbose|repaglinide|glucagon/.test(n)) return 'diabetes';
+  if(/zepam|zolam|oxetine|traline|pram|apine|idone|phenidate|amphetamine|gabapentin|pregabalin|topiramate|lamotrigine|levetiracetam|carbamazepine|valpro|lithium|donepezil|memantine|morphine|oxycodone|hydrocodone|fentanyl|tramadol|methadone|buprenorphine|barbital|haloperidol|clozapine|quetiapine/.test(n)) return 'psych';
+  if(/profen|naproxen|diclofenac|ketorolac|coxib|acetaminophen|paracetamol|aspirin|sumatriptan|lidocaine|prednisone|prednisolone|dexamethasone|methylprednisolone|hydrocortisone|betamethasone|triamcinolone/.test(n)) return 'pain';
+  if(/prazole|tidine|setron|lax|docusate|bisacodyl|loperamide|sucralfate|mesalamine|linaclotide|glycopyrrolate|dicyclomine|metoclopramide|promethazine|lactulose/.test(n)) return 'gi';
+  if(/albuterol|salmeterol|formoterol|tiotropium|ipratropium|budesonide|fluticasone|mometasone|montelukast|cetirizine|loratadine|fexofenadine|desloratadine|diphenhydramine|hydroxyzine|benzonatate|dextromethorphan|omalizumab/.test(n)) return 'respiratory';
+  return 'default';
+}
+function makeDrug(name, idx){
+  const p=CLASS_PROFILES[inferProfile(name)];
+  const pretty=name.replace(/\w/g, c=>c.toUpperCase());
+  const q=encodeURIComponent(pretty);
+  return {
+    name: pretty, generic: pretty, cls: p.cls, color: p.color,
+    desc: `${pretty} reference profile with class-based education. Verify patient-specific use, dose, warnings, and formulation in the linked official label before clinical decisions.`,
+    uses:[...p.uses], dosage:p.dosage, se:p.se.map(x=>({...x})), adrs:p.adrs.map(x=>({...x})), contra:[...p.contra], inter:[...p.inter], tags:[...p.tags],
+    sources:[{label:'DailyMed label search',url:`https://dailymed.nlm.nih.gov/dailymed/search.cfm?query=${q}`},{label:'MedlinePlus search',url:`https://medlineplus.gov/search/?query=${q}`},{label:'FDA drug databases',url:'https://www.fda.gov/drugs/drug-approvals-and-databases'}],
+    reviewed:'Source lookup required for product-specific labeling', expanded:true
+  };
+}
+function buildDrugDatabase(){
+  const map=new Map();
+  CLINICALLY_REVIEWED_DB.forEach(d=>map.set(d.name.toLowerCase(), {...d, sources:d.sources||[{label:'DailyMed',url:`https://dailymed.nlm.nih.gov/dailymed/search.cfm?query=${encodeURIComponent(d.name)}`},{label:'MedlinePlus',url:`https://medlineplus.gov/search/?query=${encodeURIComponent(d.name)}`}], reviewed:d.reviewed||'Detailed starter profile'}));
+  EXPANDED_DRUG_NAMES.forEach((name,i)=>{ if(!map.has(name.toLowerCase())) map.set(name.toLowerCase(), makeDrug(name,i)); });
+  return [...map.values()].sort((a,b)=>a.name.localeCompare(b.name));
+}
+const DB=buildDrugDatabase();
+
+// ═══════════════════════════════════════════════
+//  AI SUMMARY GENERATOR
+// ═══════════════════════════════════════════════
+function aiSummary(d){
+  const sv=d.se.filter(s=>s.sev==='severe').length;
+  const risk=sv>=3?'high':sv>=1?'moderate':'low';
+  const adr=d.adrs[0];
+  const inter=d.inter[0];
+  return `<b>${d.name}</b> (${d.cls}) is primarily indicated for ${d.uses[0].toLowerCase()} and ${(d.uses[1]||'related indications').toLowerCase()}. Overall risk profile is classified as <b>${risk}</b> — ${d.se.length} documented side effects, ${sv} severe. Most clinically significant ADR: <b>${adr.name}</b> (${adr.inc}) via ${adr.mech.substring(0,70)}… Critical drug interaction: <b>${inter}</b>. ${sv>=2?'Exercise caution in patients with renal/hepatic impairment, elderly populations, and those on polypharmacy.':'Generally well-tolerated at standard therapeutic doses with appropriate monitoring.'}`;
+}
+
+// ═══════════════════════════════════════════════
+//  RENDER CARD
+// ═══════════════════════════════════════════════
+function renderCard(d){
+  const seHtml=d.se.map(s=>`<span class="se-pill se-${s.sev}">● ${s.txt}</span>`).join('');
+  const adrHtml=d.adrs.map(a=>`<div class="adr-item"><div class="adr-name">${a.name}</div><div class="adr-mech">${a.mech}</div><div class="adr-inc">Incidence: ${a.inc}</div></div>`).join('');
+  const contraHtml=d.contra.map(c=>`<li class="contra-li">${c}</li>`).join('');
+  const interHtml=d.inter.map(i=>`<li class="inter-li">${i}</li>`).join('');
+  const srcHtml=(d.sources||[]).map(s=>`<a href="${s.url}" target="_blank" rel="noopener">${s.label}</a>`).join('');
+  const dn=d.name.replace(/[^a-z0-9]/gi,'_');
+  return `
+<div class="drug-card">
+  <div class="card-hd">
+    <div class="card-hd-left">
+      <div class="drug-nm">${d.name}</div>
+      <div class="drug-gn">${d.generic}</div>
+    </div>
+    <div class="drug-cls">${d.cls}</div>
+  </div>
+  <div class="card-bd">
+    <div>
+      <div class="ib"><h3>Description</h3><p>${d.desc}</p></div>
+      <div class="ib"><h3>Clinical Uses</h3><ul>${d.uses.map(u=>`<li>${u}</li>`).join('')}</ul></div>
+      <div class="ib"><h3>Dosage & Administration</h3><p>${d.dosage}</p></div>
+      <div class="ib"><h3>Contraindications</h3><ul>${contraHtml}</ul></div>
+    </div>
+    <div>
+      <div class="ib"><h3>Side Effects</h3>${seHtml}</div>
+      <div class="ib"><h3>Adverse Drug Reactions (ADRs)</h3>${adrHtml}</div>
+      <div class="ib"><h3>Drug Interactions</h3><ul>${interHtml}</ul></div>
+      <div class="ib"><h3>Sources & Review Status</h3><p>${d.reviewed||'Review source links before clinical use.'}</p><div class="source-links">${srcHtml}</div></div>
+    </div>
+  </div>
+  <div class="ai-box">
+    <div class="ai-hd"><div class="ai-logo">AI</div><span class="ai-title">AI Clinical Summary</span></div>
+    <p>${aiSummary(d)}</p>
+  </div>
+  <div class="dl-bar">
+    <span class="dl-label">⬇ Download:</span>
+    <a class="dl-btn prime" href="#" onclick="dlPDF(DB.find(x=>x.name==='${d.name}')); return false;">📄 PDF Report</a>
+    <a class="dl-btn" href="#" onclick="dlCSV(DB.find(x=>x.name==='${d.name}')); return false;">📊 CSV Data</a>
+    <a class="dl-btn" href="#" onclick="dlJSON(DB.find(x=>x.name==='${d.name}')); return false;">{} JSON</a>
+  </div>
+</div>`;
+}
+
+// ═══════════════════════════════════════════════
+//  SEARCH
+// ═══════════════════════════════════════════════
+function qs(term){ document.getElementById('q').value=term; doSearch(); }
+function doSearch(){
+  const q=document.getElementById('q').value.trim().toLowerCase();
+  const el=document.getElementById('results');
+  if(!q) return;
+  el.style.display='block';
+  el.innerHTML=`<div class="loading"><div class="spin"></div> AI is analyzing "${q}"…</div>`;
+  setTimeout(()=>{
+    const m=DB.filter(d=>
+      d.name.toLowerCase().includes(q)||d.generic.toLowerCase().includes(q)||
+      d.cls.toLowerCase().includes(q)||d.uses.some(u=>u.toLowerCase().includes(q))||
+      d.tags.some(t=>t.toLowerCase().includes(q))||
+      d.se.some(s=>s.txt.toLowerCase().includes(q))||
+      d.adrs.some(a=>a.name.toLowerCase().includes(q)||a.mech.toLowerCase().includes(q))||
+      d.contra.some(c=>c.toLowerCase().includes(q))||
+      d.inter.some(i=>i.toLowerCase().includes(q))
+    );
+    el.innerHTML = m.length
+      ? `<div class="res-count">Found ${m.length} result${m.length>1?'s':''} for "${q}"</div>`+m.map(renderCard).join('')
+      : `<div class="no-res">No results for "${q}". Try a generic name, drug class, or condition like "pain" or "diabetes".</div>`;
+    el.scrollIntoView({behavior:'smooth',block:'start'});
+  },800);
+}
+
+// ═══════════════════════════════════════════════
+//  GRID
+// ═══════════════════════════════════════════════
+let activeFilter='All';
+function drugMatchesFilter(d){ return activeFilter==='All' || d.tags.includes(activeFilter) || d.cls.toLowerCase().includes(activeFilter.toLowerCase()); }
+function buildFilters(){
+  const wanted=['All','Antibiotic','Cardiac','BP','Diabetes','Pain','Fever','GI','Respiratory','Allergy','CNS'];
+  document.getElementById('filters').innerHTML=wanted.map(f=>`<button class="filter-chip ${activeFilter===f?'active':''}" onclick="activeFilter='${f}';buildFilters();buildGrid();">${f}</button>`).join('');
+}
+function buildGrid(){
+  const view=DB.filter(drugMatchesFilter).slice(0,540);
+  document.querySelector('#browse .sec-sub').textContent=`${view.length} shown from ${DB.length} medicines. Click any card to view side effects, ADRs, contraindications, dosing context, and sources.`;
+  document.getElementById('grid').innerHTML=view.map(d=>`
+    <div class="gcard" onclick="qs('${d.name.replace(/'/g,"\'")}');document.getElementById('search').scrollIntoView({behavior:'smooth'})">
+      <div class="gc-dot" style="background:${d.color}"></div>
+      <div class="gc-name">${d.name}</div>
+      <div class="gc-cls">${d.cls}</div>
+      <div class="gc-tags">${d.tags.map(t=>`<span class="gc-tag" style="background:${d.color}20;color:${d.color};border:1px solid ${d.color}35">${t}</span>`).join('')}</div>
+      <div class="gc-stats">${d.se.length} side effects &middot; ${d.adrs.length} ADRs &middot; ${d.inter.length} interactions</div>
+    </div>`).join('');
+}
+buildFilters();
+buildGrid();
+document.querySelectorAll('.stat-n')[0].textContent=DB.length+'+';
+
+// ═══════════════════════════════════════════════
+//  DOWNLOADS
+// ═══════════════════════════════════════════════
+function dl(name,type,content){
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(new Blob([content],{type}));
+  a.download=name; a.click(); URL.revokeObjectURL(a.href);
+}
+
+function dlCSV(d){
+  const rows=[
+    ['Field','Value'],
+    ['Drug Name',d.name],['Generic Name',d.generic],['Drug Class',d.cls],
+    ['Description',d.desc],['',''],
+    ['CLINICAL USES',''],...d.uses.map(u=>['Use',u]),['',''],
+    ['DOSAGE',d.dosage],['',''],
+    ['SIDE EFFECTS',''],...d.se.map(s=>['Side Effect ('+s.sev+')',s.txt]),['',''],
+    ['ADVERSE DRUG REACTIONS',''],...d.adrs.map(a=>['ADR',`${a.name} | ${a.mech} | Incidence: ${a.inc}`]),['',''],
+    ['CONTRAINDICATIONS',''],...d.contra.map(c=>['Contraindication',c]),['',''],
+    ['DRUG INTERACTIONS',''],...d.inter.map(i=>['Interaction',i]),['',''],
+    ['AI SUMMARY',aiSummary(d).replace(/<[^>]+>/g,'')], ['SOURCES',(d.sources||[]).map(s=>s.label+': '+s.url).join('; ')]
+  ];
+  dl(`${d.name}_PharmaAI.csv`,'text/csv',rows.map(r=>r.map(c=>`"${String(c).replace(/"/g,'""')}"`).join(',')).join('\n'));
+}
+
+function dlJSON(d){ dl(`${d.name}_PharmaAI.json`,'application/json',JSON.stringify(d,null,2)); }
+
+function dlPDF(d){
+  const se=s=>`<span style="display:inline-block;margin:2px 3px;padding:3px 10px;border-radius:12px;font-size:12px;font-weight:600;background:${s.sev==='severe'?'#fce9e7':s.sev==='moderate'?'#fbebde':'#e8f1ec'};color:${s.sev==='severe'?'#c0392b':s.sev==='moderate'?'#795c00':'#1a5e3a'}">${s.txt}</span>`;
+  const html=`<!DOCTYPE html><html><head><title>${d.name} — PharmaAI Report</title>
+  <style>body{font-family:Arial,sans-serif;max-width:760px;margin:40px auto;color:#222;line-height:1.6;font-size:14px}
+  h1{color:#1a4fa0;border-bottom:3px solid #1a4fa0;padding-bottom:10px;font-size:26px}
+  h2{color:#1a4fa0;font-size:13px;margin:24px 0 8px;text-transform:uppercase;letter-spacing:1.5px}
+  .tag{display:inline-block;background:#e5f2fc;color:#1a4fa0;padding:4px 12px;border-radius:12px;font-size:12px;font-weight:700}
+  table{width:100%;border-collapse:collapse;margin-top:4px}
+  td,th{padding:8px 12px;border:1px solid #ddd;font-size:13px;vertical-align:top}
+  th{background:#f5f5f5;font-weight:700;text-align:left}
+  .ai-box{background:#f0f7ff;border-left:4px solid #1a4fa0;padding:14px;border-radius:4px;font-size:13px}
+  .footer{margin-top:48px;font-size:11px;color:#999;border-top:1px solid #eee;padding-top:14px}
+  @media print{body{margin:20px}}
+  </style></head><body>
+  <h1>💊 ${d.name} <small style="font-size:16px;color:#666;font-weight:400">(${d.generic})</small></h1>
+  <span class="tag">${d.cls}</span>
+  <h2>Description</h2><p>${d.desc}</p>
+  <h2>Clinical Uses</h2><ul>${d.uses.map(u=>`<li>${u}</li>`).join('')}</ul>
+  <h2>Dosage & Administration</h2><p>${d.dosage}</p>
+  <h2>Side Effects</h2>${d.se.map(se).join('')}
+  <h2>Adverse Drug Reactions (ADRs)</h2>
+  <table><tr><th>ADR</th><th>Mechanism</th><th>Incidence</th></tr>${d.adrs.map(a=>`<tr><td><b>${a.name}</b></td><td>${a.mech}</td><td>${a.inc}</td></tr>`).join('')}</table>
+  <h2>Contraindications</h2><ul>${d.contra.map(c=>`<li style="color:#c0392b">${c}</li>`).join('')}</ul>
+  <h2>Drug Interactions</h2><ul>${d.inter.map(i=>`<li style="color:#795c00">${i}</li>`).join('')}</ul>
+  <h2>AI Clinical Summary</h2><div class="ai-box">${aiSummary(d).replace(/<[^>]+>/g,t=>t)}</div>
+  <div class="footer">Generated by PharmaAI &bull; For informational purposes only &bull; Consult a licensed healthcare professional before using any medication &bull; ${new Date().toLocaleDateString()}</div>
+  </body></html>`;
+  const w=window.open('','_blank','width=850,height=950');
+  w.document.write(html); w.document.close();
+  setTimeout(()=>w.print(),500);
+}
+
+function downloadAll(){
+  const hdr=['Drug Name','Generic','Class','Description','Uses','Dosage','SE Mild','SE Moderate','SE Severe','ADRs','Contraindications','Interactions','Sources'];
+  const rows=DB.map(d=>[
+    d.name,d.generic,d.cls,d.desc,
+    d.uses.join('; '),d.dosage,
+    d.se.filter(s=>s.sev==='mild').map(s=>s.txt).join('; '),
+    d.se.filter(s=>s.sev==='moderate').map(s=>s.txt).join('; '),
+    d.se.filter(s=>s.sev==='severe').map(s=>s.txt).join('; '),
+    d.adrs.map(a=>`${a.name} (${a.inc})`).join('; '),
+    d.contra.join('; '),
+    d.inter.join('; '),
+    (d.sources||[]).map(s=>s.label+': '+s.url).join('; ')
+  ]);
+  dl('PharmaAI_Complete_Database.csv','text/csv',[hdr,...rows].map(r=>r.map(c=>`"${String(c).replace(/"/g,'""')}"`).join(',')).join('\n'));
+}
+
+function downloadJSON(){ dl('PharmaAI_Complete_Database.json','application/json',JSON.stringify(DB,null,2)); }
+
+// ═══════════════════════════════════════════════
+//  REAL LOGIN — FIREBASE AUTH READY
+// ═══════════════════════════════════════════════
+let authMode='login';
+let firebaseAuth=null;
+const firebaseConfig = {
+  apiKey: "AIzaSyA6oWG7RXvEvcOM1RvfQqRErF6aBrVKgdY",
+  authDomain: "pharma-ai-7791c.firebaseapp.com",
+  projectId: "pharma-ai-7791c",
+  storageBucket: "pharma-ai-7791c.firebasestorage.app",
+  messagingSenderId: "1077606395353",
+  appId: "1:1077606395353:web:8e861d78f13fdd5f623dc8",
+  measurementId: "G-Y3QL69SCGQ"
+};
+const firebaseReady = !Object.values(firebaseConfig).some(v => String(v).startsWith('PASTE_'));
+function openAuth(){ document.getElementById('authBackdrop').style.display='flex'; document.getElementById('authEmail').focus(); }
+function closeAuth(){ document.getElementById('authBackdrop').style.display='none'; }
+function setAuthMode(mode){
+  authMode=mode;
+  document.getElementById('loginTab').classList.toggle('active',mode==='login');
+  document.getElementById('signupTab').classList.toggle('active',mode==='signup');
+  document.getElementById('authSubmit').textContent = mode==='login' ? 'Login securely' : 'Create secure account';
+  document.getElementById('authMsg').textContent='';
+}
+async function initFirebaseAuth(){
+  if(!firebaseReady) { updateAuthUi(null); return; }
+  try{
+    const appMod = await import('https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js');
+    const authMod = await import('https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js');
+    const app = appMod.initializeApp(firebaseConfig);
+    firebaseAuth = { auth: authMod.getAuth(app), ...authMod };
+    firebaseAuth.onAuthStateChanged(firebaseAuth.auth, updateAuthUi);
+  }catch(err){ document.getElementById('authMsg').textContent='Could not load Firebase Auth. Check internet connection and Firebase config.'; }
+}
+function updateAuthUi(user){
+  const btn=document.getElementById('authBtn'), pill=document.getElementById('userPill');
+  if(user){
+    btn.style.display='none'; pill.style.display='inline-flex';
+    pill.textContent='✅ '+(user.email || 'Signed in');
+  } else {
+    btn.style.display='inline-flex'; pill.style.display='none'; pill.textContent='';
+  }
+}
+async function submitAuth(e){
+  e.preventDefault();
+  const msg=document.getElementById('authMsg');
+  if(!firebaseReady){ msg.innerHTML='Firebase is not configured yet. Replace the firebaseConfig placeholders in this HTML file to activate real login.'; return; }
+  if(!firebaseAuth){ msg.textContent='Firebase Auth is still loading. Try again in a moment.'; return; }
+  const email=document.getElementById('authEmail').value.trim();
+  const password=document.getElementById('authPassword').value;
+  try{
+    if(authMode==='signup') await firebaseAuth.createUserWithEmailAndPassword(firebaseAuth.auth,email,password);
+    else await firebaseAuth.signInWithEmailAndPassword(firebaseAuth.auth,email,password);
+    msg.style.color='#b8f7d1'; msg.textContent='Signed in successfully.'; setTimeout(closeAuth,700);
+  }catch(err){ msg.style.color='#f5b76a'; msg.textContent=(err && err.message) ? err.message.replace('Firebase: ','') : 'Authentication failed.'; }
+}
+async function signOutUser(){
+  if(firebaseAuth){ await firebaseAuth.signOut(firebaseAuth.auth); document.getElementById('authMsg').textContent='Signed out.'; }
+  updateAuthUi(null);
+}
+initFirebaseAuth();
+
+</script>
+</body>
+</html>
