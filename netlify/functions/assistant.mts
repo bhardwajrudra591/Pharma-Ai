@@ -1,3 +1,4 @@
+import { requireAccess } from '../../server/access.js';
 type ChatMessage = {
   role: 'user' | 'assistant'
   content: string
@@ -23,6 +24,7 @@ export default async (req: Request) => {
   }
 
   try {
+    await requireAccess(req)
     const body = await req.json()
     const messages = Array.isArray(body?.messages) ? body.messages : []
     const cleanMessages: ChatMessage[] = messages
@@ -32,15 +34,15 @@ export default async (req: Request) => {
         return (message.role === 'user' || message.role === 'assistant') && typeof message.content === 'string'
       })
       .slice(-10)
-      .map((message) => ({ role: message.role, content: message.content.trim().slice(0, 3000) }))
-      .filter((message) => message.content.length > 0)
+      .map((message: ChatMessage) => ({ role: message.role, content: message.content.trim().slice(0, 3000) }))
+      .filter((message: ChatMessage) => message.content.length > 0)
 
     if (!cleanMessages.length || cleanMessages.at(-1)?.role !== 'user') {
       return Response.json({ error: 'Please include a question.' }, { status: 400 })
     }
 
-    const baseUrl = process.env.OPENAI_BASE_URL
-    const apiKey = process.env.OPENAI_API_KEY
+    const baseUrl = Netlify.env.get('OPENAI_BASE_URL')
+    const apiKey = Netlify.env.get('OPENAI_API_KEY')
     if (!baseUrl || !apiKey) {
       return Response.json({ error: 'The assistant is temporarily unavailable.' }, { status: 503 })
     }
@@ -70,7 +72,8 @@ export default async (req: Request) => {
     }
 
     return Response.json({ answer: answer.trim() })
-  } catch {
+  } catch (error) {
+    if (error instanceof Response) return Response.json({ error: await error.text() }, { status: error.status })
     return Response.json({ error: 'Something went wrong. Please try again.' }, { status: 500 })
   }
 }
